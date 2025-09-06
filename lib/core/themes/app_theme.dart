@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../constants/app_colors.dart';
-import '../constants/app_typography.dart';
 import '../constants/app_spacing.dart';
-import 'light_theme.dart';
+import '../constants/app_typography.dart';
 import 'dark_theme.dart';
+import 'light_theme.dart';
 
 /// Main app theme configuration for MBTI Explorer
 /// Combines colors, typography, and spacing into a cohesive design system
@@ -127,8 +128,8 @@ class AppTheme {
         ),
       ),
 
-      // Card theme
-      cardTheme: CardTheme(
+      // Card theme - FIXED: Changed CardTheme to CardThemeData
+      cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 2,
         shadowColor: AppColors.shadow.withOpacity(0.1),
@@ -282,7 +283,7 @@ class AppTheme {
       ),
 
       // Tab bar theme
-      tabBarTheme: const TabBarTheme(
+      tabBarTheme: const TabBarThemeData(
         labelColor: AppColors.primary,
         unselectedLabelColor: AppColors.textSecondary,
         indicatorColor: AppColors.primary,
@@ -292,7 +293,7 @@ class AppTheme {
       ),
 
       // Dialog theme
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surface,
         elevation: 8,
         shape: RoundedRectangleBorder(

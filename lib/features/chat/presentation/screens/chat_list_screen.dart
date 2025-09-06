@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:opop/features/auth/preference/auth_preference.dart';
+
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
+import '../../../profile/presentation/screens/user_profile_screen.dart';
 import '../../data/datasources/chat_dummy_data.dart';
 import '../../data/models/chat_conversation.dart';
-import '../../data/models/chat_message.dart';
+import '../widgets/chat_filter_chips.dart';
 import '../widgets/chat_list_item.dart';
 import '../widgets/chat_search_bar.dart';
-import '../widgets/chat_filter_chips.dart';
 import 'chat_detail_screen.dart';
-import '../../../profile/presentation/screens/user_profile_screen.dart';
 
 /// Chat list screen for MBTI Explorer app
 /// Displays all conversations with search and filtering capabilities
@@ -31,6 +32,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
   void initState() {
     super.initState();
     _loadConversations();
+  }
+
+  //TODO: get userData
+  void _showUserData() async {
+    final authPreference = AuthPreference();
+    authPreference.getLoginData();
   }
 
   void _loadConversations() {
@@ -74,8 +81,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
     // Apply type filter
     if (_selectedFilter != null) {
-      filtered =
-          filtered.where((conv) => conv.type == _selectedFilter).toList();
+      filtered = filtered
+          .where((conv) => conv.type == _selectedFilter)
+          .toList();
     }
 
     setState(() {
@@ -88,7 +96,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     if (conversation.unreadCount > 0) {
       _markConversationAsRead(conversation);
     }
-    
+
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => ChatDetailScreen(conversation: conversation),
@@ -99,15 +107,21 @@ class _ChatListScreenState extends State<ChatListScreen> {
   void _markConversationAsRead(ChatConversation conversation) {
     setState(() {
       // Update the conversation in the original list
-      final index = _conversations.indexWhere((conv) => conv.id == conversation.id);
+      final index = _conversations.indexWhere(
+        (conv) => conv.id == conversation.id,
+      );
       if (index != -1) {
         _conversations[index] = conversation.copyWith(unreadCount: 0);
       }
-      
+
       // Update the filtered list as well
-      final filteredIndex = _filteredConversations.indexWhere((conv) => conv.id == conversation.id);
+      final filteredIndex = _filteredConversations.indexWhere(
+        (conv) => conv.id == conversation.id,
+      );
       if (filteredIndex != -1) {
-        _filteredConversations[filteredIndex] = conversation.copyWith(unreadCount: 0);
+        _filteredConversations[filteredIndex] = conversation.copyWith(
+          unreadCount: 0,
+        );
       }
     });
   }
@@ -304,8 +318,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
           horizontal: AppSpacing.screenPadding,
         ),
         itemCount: _filteredConversations.length,
-        separatorBuilder:
-            (context, index) => const SizedBox(height: AppSpacing.sm),
+        separatorBuilder: (context, index) =>
+            const SizedBox(height: AppSpacing.sm),
         itemBuilder: (context, index) {
           final conversation = _filteredConversations[index];
           return ChatListItem(

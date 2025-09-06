@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'core/themes/app_theme.dart';
+
 import 'core/constants/app_constants.dart';
-import 'features/navigation/presentation/screens/main_navigation_screen.dart';
+import 'core/themes/app_theme.dart';
+import 'features/splash/presentation/screens/splash_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,7 +19,7 @@ class MyApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode:
           ThemeMode.system, // Automatically switch between light and dark
-      home: const MainNavigationScreen(),
+      home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
     );
   }

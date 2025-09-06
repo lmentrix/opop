@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_typography.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/app_typography.dart';
+import '../../../../core/services/auth_service.dart';
+import '../../../auth/presentation/screens/login_screen.dart';
 
 class SignoutScreen extends StatelessWidget {
   const SignoutScreen({super.key});
@@ -172,7 +175,9 @@ class SignoutScreen extends StatelessWidget {
     );
   }
 
-  void _performSignOut(BuildContext context) {
+  void _performSignOut(BuildContext context) async {
+    final authService = AuthService();
+
     // Show loading indicator
     showDialog(
       context: context,
@@ -184,25 +189,52 @@ class SignoutScreen extends StatelessWidget {
       },
     );
 
-    // Simulate sign out process
-    Future.delayed(const Duration(seconds: 2), () {
-      Navigator.of(context).pop(); // Close loading dialog
+    try {
+      // Perform actual logout
 
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Successfully signed out',
-            style: AppTypography.bodyLarge.copyWith(color: AppColors.surface),
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Successfully signed out',
+              style: AppTypography.bodyLarge.copyWith(color: AppColors.surface),
+            ),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      );
+        );
 
-      // Navigate to login screen (replace with actual navigation)
-      // Navigator.of(context).pushReplacementNamed('/login');
-    });
+        // Navigate to login screen
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Error signing out: ${e.toString()}',
+              style: AppTypography.bodyLarge.copyWith(color: AppColors.surface),
+            ),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    }
   }
 }

@@ -64,10 +64,9 @@ class UserProfile {
       assessmentCount: json['assessmentCount'] as int,
       conversationCount: json['conversationCount'] as int,
       achievementCount: json['achievementCount'] as int,
-      achievements:
-          (json['achievements'] as List)
-              .map((e) => Achievement.fromJson(e as Map<String, dynamic>))
-              .toList(),
+      achievements: (json['achievements'] as List)
+          .map((e) => Achievement.fromJson(e as Map<String, dynamic>))
+          .toList(),
       preferences: Map<String, dynamic>.from(json['preferences'] as Map),
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),

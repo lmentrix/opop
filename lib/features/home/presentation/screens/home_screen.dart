@@ -1,12 +1,32 @@
 import 'package:flutter/material.dart';
+
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/services/auth_service.dart';
 
 /// Home screen for MBTI Explorer app
 /// Showcases the theme system and provides navigation to different features
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final AuthService _authService = AuthService();
+  String? _username;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    // TODO: Implement user data loading logic
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +86,17 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Personalized greeting
+            if (_username != null) ...[
+              Text(
+                'Welcome back, $_username!',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+            ],
             Text(
               'Discover Your Personality',
               style: Theme.of(context).textTheme.headlineLarge?.copyWith(

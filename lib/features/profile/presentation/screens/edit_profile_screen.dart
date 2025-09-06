@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
@@ -361,42 +362,41 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         labelText: 'Select your MBTI type',
                         border: InputBorder.none,
                       ),
-                      items:
-                          _mbtiTypes.map((type) {
-                            return DropdownMenuItem(
-                              value: type,
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color: _getMBTIColor(type),
-                                      borderRadius: BorderRadius.circular(
-                                        AppSpacing.full,
-                                      ),
-                                    ),
+                      items: _mbtiTypes.map((type) {
+                        return DropdownMenuItem(
+                          value: type,
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: _getMBTIColor(type),
+                                  borderRadius: BorderRadius.circular(
+                                    AppSpacing.full,
                                   ),
-                                  const SizedBox(width: AppSpacing.sm),
-                                  Text(
-                                    type,
-                                    style: AppTypography.bodyMedium.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                  const SizedBox(width: AppSpacing.sm),
-                                  Text(
-                                    _getMBTIDescription(type),
-                                    style: AppTypography.bodySmall.copyWith(
-                                      color: AppColors.textSecondary,
-                                      letterSpacing: 0.2,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
-                            );
-                          }).toList(),
+                              const SizedBox(width: AppSpacing.sm),
+                              Text(
+                                type,
+                                style: AppTypography.bodyMedium.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              Text(
+                                _getMBTIDescription(type),
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: AppColors.textSecondary,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
                       onChanged: (value) {
                         if (value != null) {
                           setState(() {
@@ -542,31 +542,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         child: ElevatedButton(
           onPressed: _hasChanges ? _saveProfile : null,
           style: ElevatedButton.styleFrom(
-            backgroundColor:
-                _hasChanges ? AppColors.primary : AppColors.textDisabled,
+            backgroundColor: _hasChanges
+                ? AppColors.primary
+                : AppColors.textDisabled,
             foregroundColor: AppColors.textInverse,
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppSpacing.md),
             ),
           ),
-          child:
-              _isLoading
-                  ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      color: AppColors.textInverse,
-                      strokeWidth: 2,
-                    ),
-                  )
-                  : Text(
-                    'Save Changes',
-                    style: AppTypography.titleMedium.copyWith(
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                    ),
+          child: _isLoading
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    color: AppColors.textInverse,
+                    strokeWidth: 2,
                   ),
+                )
+              : Text(
+                  'Save Changes',
+                  style: AppTypography.titleMedium.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                  ),
+                ),
         ),
       ),
     );
@@ -576,108 +576,94 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder:
-          (context) => Container(
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(AppSpacing.lg),
-                topRight: Radius.circular(AppSpacing.lg),
-              ),
-            ),
-            child: SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                    decoration: BoxDecoration(
-                      color: AppColors.textDisabled,
-                      borderRadius: BorderRadius.circular(AppSpacing.full),
-                    ),
-                  ),
-                  Text(
-                    'Choose Avatar',
-                    style: AppTypography.titleLarge.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.lg,
-                    ),
-                    child: GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 4,
-                            crossAxisSpacing: AppSpacing.md,
-                            mainAxisSpacing: AppSpacing.md,
-                          ),
-                      itemCount: _avatarOptions.length,
-                      itemBuilder: (context, index) {
-                        final avatar = _avatarOptions[index];
-                        final isSelected = avatar == _selectedAvatar;
-
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _selectedAvatar = avatar;
-                              _hasChanges = true;
-                            });
-                            Navigator.pop(context);
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient:
-                                  isSelected
-                                      ? LinearGradient(
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                        colors: _getMBTIGradient(_selectedMBTI),
-                                      )
-                                      : null,
-                              color:
-                                  isSelected
-                                      ? null
-                                      : AppColors.surfaceVariant.withOpacity(
-                                        0.3,
-                                      ),
-                              borderRadius: BorderRadius.circular(
-                                AppSpacing.md,
-                              ),
-                              border:
-                                  isSelected
-                                      ? Border.all(
-                                        color: Colors.white,
-                                        width: 2,
-                                      )
-                                      : null,
-                            ),
-                            child: Center(
-                              child: Text(
-                                avatar,
-                                style: AppTypography.titleLarge.copyWith(
-                                  fontSize: 32,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                ],
-              ),
-            ),
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(AppSpacing.lg),
+            topRight: Radius.circular(AppSpacing.lg),
           ),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.textDisabled,
+                  borderRadius: BorderRadius.circular(AppSpacing.full),
+                ),
+              ),
+              Text(
+                'Choose Avatar',
+                style: AppTypography.titleLarge.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    crossAxisSpacing: AppSpacing.md,
+                    mainAxisSpacing: AppSpacing.md,
+                  ),
+                  itemCount: _avatarOptions.length,
+                  itemBuilder: (context, index) {
+                    final avatar = _avatarOptions[index];
+                    final isSelected = avatar == _selectedAvatar;
+
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedAvatar = avatar;
+                          _hasChanges = true;
+                        });
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: isSelected
+                              ? LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: _getMBTIGradient(_selectedMBTI),
+                                )
+                              : null,
+                          color: isSelected
+                              ? null
+                              : AppColors.surfaceVariant.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(AppSpacing.md),
+                          border: isSelected
+                              ? Border.all(color: Colors.white, width: 2)
+                              : null,
+                        ),
+                        child: Center(
+                          child: Text(
+                            avatar,
+                            style: AppTypography.titleLarge.copyWith(
+                              fontSize: 32,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -685,46 +671,45 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (_hasChanges) {
       showDialog(
         context: context,
-        builder:
-            (context) => AlertDialog(
-              title: Text(
-                'Unsaved Changes',
-                style: AppTypography.titleLarge.copyWith(
-                  fontWeight: FontWeight.w700,
+        builder: (context) => AlertDialog(
+          title: Text(
+            'Unsaved Changes',
+            style: AppTypography.titleLarge.copyWith(
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+            ),
+          ),
+          content: Text(
+            'You have unsaved changes. Are you sure you want to leave?',
+            style: AppTypography.bodyMedium.copyWith(letterSpacing: 0.3),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancel',
+                style: AppTypography.labelLarge.copyWith(
+                  fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
                 ),
               ),
-              content: Text(
-                'You have unsaved changes. Are you sure you want to leave?',
-                style: AppTypography.bodyMedium.copyWith(letterSpacing: 0.3),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    'Cancel',
-                    style: AppTypography.labelLarge.copyWith(
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.pop(context);
-                  },
-                  child: Text(
-                    'Leave',
-                    style: AppTypography.labelLarge.copyWith(
-                      color: AppColors.error,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ],
             ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
+              child: Text(
+                'Leave',
+                style: AppTypography.labelLarge.copyWith(
+                  color: AppColors.error,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ],
+        ),
       );
     } else {
       Navigator.pop(context);
@@ -875,10 +860,3 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 }
-
-
-
-
-
-
-

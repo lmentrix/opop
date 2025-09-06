@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_ai_toolkit/flutter_ai_toolkit.dart';
+
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
 import '../../data/datasources/chat_dummy_data.dart';
 import '../../data/models/chat_conversation.dart';
-import '../../data/models/chat_message.dart';
-import '../widgets/chat_message_bubble.dart';
+import '../../data/models/chat_message.dart' as local_models;
 import '../widgets/chat_input_field.dart';
+import '../widgets/chat_message_bubble.dart';
 
 /// Chat detail screen for MBTI Explorer app
 /// Displays conversation messages and allows user input
@@ -26,8 +26,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen>
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
 
-  List<ChatMessage> _messages = [];
-  
+  List<local_models.ChatMessage> _messages = [];
+
   bool _isLoading = false;
   bool _isTyping = false;
   late AnimationController _typingController;
@@ -99,14 +99,14 @@ class _ChatDetailScreenState extends State<ChatDetailScreen>
     if (message.isEmpty) return;
 
     // Add user message
-    final userMessage = ChatMessage(
+    final userMessage = local_models.ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       senderId: 'user',
       senderName: 'You',
       senderAvatar: '👤',
       content: message,
       timestamp: DateTime.now(),
-      type: MessageType.text,
+      type: local_models.MessageType.text,
       isRead: true,
     );
 
@@ -124,14 +124,14 @@ class _ChatDetailScreenState extends State<ChatDetailScreen>
 
   void _onImageSelected(String imagePath, String fileName) {
     // Create image message
-    final imageMessage = ChatMessage(
+    final imageMessage = local_models.ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       senderId: 'user',
       senderName: 'You',
       senderAvatar: '👤',
       content: imagePath, // Store the full image path in content
       timestamp: DateTime.now(),
-      type: MessageType.image,
+      type: local_models.MessageType.image,
       isRead: true,
       metadata: {'fileName': fileName, 'imagePath': imagePath},
     );
@@ -168,7 +168,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen>
         final randomResponse =
             responses[DateTime.now().millisecond % responses.length];
 
-        final botMessage = ChatMessage(
+        final botMessage = local_models.ChatMessage(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           senderId: widget.conversation.participantIds.firstWhere(
             (id) => id != 'user',
@@ -178,7 +178,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen>
           senderAvatar: widget.conversation.lastSenderAvatar,
           content: randomResponse,
           timestamp: DateTime.now(),
-          type: MessageType.text,
+          type: local_models.MessageType.text,
           isRead: false,
         );
 
@@ -210,7 +210,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen>
     });
   }
 
-  ChatMessage _generateBotResponse(String userMessage) {
+  local_models.ChatMessage _generateBotResponse(String userMessage) {
     final responses = [
       'That\'s a great question! Let me think about that...',
       'I understand what you\'re asking. Here\'s what I think...',
@@ -222,7 +222,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen>
     final randomResponse =
         responses[DateTime.now().millisecond % responses.length];
 
-    return ChatMessage(
+    return local_models.ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       senderId: widget.conversation.participantIds.firstWhere(
         (id) => id != 'user',
@@ -232,7 +232,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen>
       senderAvatar: widget.conversation.lastSenderAvatar,
       content: randomResponse,
       timestamp: DateTime.now(),
-      type: MessageType.text,
+      type: local_models.MessageType.text,
       isRead: false,
     );
   }

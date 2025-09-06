@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
 import '../../../chat/presentation/screens/chat_list_screen.dart';
 import '../../../discovery/presentation/screens/discovery_screen.dart';
 import '../../../friends/presentation/screens/friends_screen.dart';
+import '../../../home/presentation/screens/home_screen.dart';
 import '../../../settings/presentation/screens/settings_screen.dart';
 
 /// Main navigation screen with bottom navigation bar
@@ -21,6 +23,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   late PageController _pageController;
 
   final List<Widget> _screens = [
+    const HomeScreen(),
     const ChatListScreen(),
     const DiscoveryScreen(),
     const FriendsScreen(),
@@ -88,27 +91,33 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             children: [
               _buildNavItem(
                 index: 0,
-                icon: Icons.chat_rounded,
-                label: 'Chats',
+                icon: Icons.home_rounded,
+                label: 'Home',
                 isSelected: _currentIndex == 0,
               ),
               _buildNavItem(
                 index: 1,
-                icon: Icons.explore_rounded,
-                label: 'Discovery',
+                icon: Icons.chat_rounded,
+                label: 'Chats',
                 isSelected: _currentIndex == 1,
               ),
               _buildNavItem(
                 index: 2,
-                icon: Icons.people_rounded,
-                label: 'Friends',
+                icon: Icons.explore_rounded,
+                label: 'Discovery',
                 isSelected: _currentIndex == 2,
               ),
               _buildNavItem(
                 index: 3,
+                icon: Icons.people_rounded,
+                label: 'Friends',
+                isSelected: _currentIndex == 3,
+              ),
+              _buildNavItem(
+                index: 4,
                 icon: Icons.settings_rounded,
                 label: 'Settings',
-                isSelected: _currentIndex == 3,
+                isSelected: _currentIndex == 4,
               ),
             ],
           ),
@@ -132,10 +141,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             horizontal: AppSpacing.xs,
           ),
           decoration: BoxDecoration(
-            color:
-                isSelected
-                    ? AppColors.primary.withOpacity(0.1)
-                    : Colors.transparent,
+            color: isSelected
+                ? AppColors.primary.withOpacity(0.1)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(AppSpacing.md),
           ),
           child: Column(
@@ -150,8 +158,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               Text(
                 label,
                 style: AppTypography.labelSmall.copyWith(
-                  color:
-                      isSelected ? AppColors.primary : AppColors.textSecondary,
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   letterSpacing: 0.3,
                 ),

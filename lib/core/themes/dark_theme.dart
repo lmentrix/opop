@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../constants/app_colors.dart';
-import '../constants/app_typography.dart';
 import '../constants/app_spacing.dart';
+import '../constants/app_typography.dart';
 
 /// Dark theme configuration for MBTI Explorer
 /// Features darker colors while maintaining the vibrant MBTI personality
@@ -143,7 +144,7 @@ class DarkTheme {
       ),
 
       // Card theme
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: const Color(0xFF2D2D2D),
         elevation: 4,
         shadowColor: AppColors.shadow.withOpacity(0.3),
@@ -299,7 +300,7 @@ class DarkTheme {
       ),
 
       // Tab bar theme
-      tabBarTheme: TabBarTheme(
+      tabBarTheme: TabBarThemeData(
         labelColor: AppColors.primary,
         unselectedLabelColor: AppColors.textInverse.withOpacity(0.6),
         indicatorColor: AppColors.primary,
@@ -309,7 +310,7 @@ class DarkTheme {
       ),
 
       // Dialog theme
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: const Color(0xFF2D2D2D),
         elevation: 8,
         shape: RoundedRectangleBorder(

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../constants/app_colors.dart';
-import '../constants/app_typography.dart';
 import '../constants/app_spacing.dart';
+import '../constants/app_typography.dart';
 
 /// Light theme configuration for MBTI Explorer
 /// Features bright, vibrant colors perfect for teen users
@@ -113,7 +114,7 @@ class LightTheme {
       ),
 
       // Card theme
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 2,
         shadowColor: AppColors.shadow.withOpacity(0.1),
@@ -267,7 +268,7 @@ class LightTheme {
       ),
 
       // Tab bar theme
-      tabBarTheme: const TabBarTheme(
+      tabBarTheme: const TabBarThemeData(
         labelColor: AppColors.primary,
         unselectedLabelColor: AppColors.textSecondary,
         indicatorColor: AppColors.primary,
@@ -277,7 +278,7 @@ class LightTheme {
       ),
 
       // Dialog theme
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surface,
         elevation: 8,
         shape: RoundedRectangleBorder(

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:opop/features/profile/presentation/screens/edit_profile_screen.dart';
+import 'package:opop/features/settings/presentation/screens/settings_screen.dart';
+
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
 import '../../data/models/user_profile.dart';
-import '../widgets/profile_section.dart';
-import '../widgets/personality_card.dart';
 import '../widgets/achievement_badge.dart';
+import '../widgets/personality_card.dart';
+import '../widgets/profile_section.dart';
 
 /// User profile screen for MBTI Explorer app
 /// Features fashion-styled typography with MBTI theme integration
@@ -48,12 +51,10 @@ class _UserProfileScreenState extends State<UserProfileScreen>
       end: 1.0,
     ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+        );
 
     _fadeController.forward();
     _slideController.forward();
@@ -180,7 +181,8 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     }
 
     return GestureDetector(
-      onTap: _changeProfilePicture,
+      //TODO: show changed p
+      onTap: () {},
       child: Container(
         width: 80,
         height: 80,
@@ -442,10 +444,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
             child: Text(
               value.isEmpty ? 'Not specified' : value,
               style: AppTypography.bodyMedium.copyWith(
-                color:
-                    value.isEmpty
-                        ? AppColors.textDisabled
-                        : AppColors.textPrimary,
+                color: value.isEmpty
+                    ? AppColors.textDisabled
+                    : AppColors.textPrimary,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.3,
               ),
@@ -604,6 +605,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   // Action methods
   void _showEditProfile() {
     // TODO: Implement edit profile
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const EditProfileScreen()));
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Edit profile coming soon!')));
@@ -611,6 +615,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
 
   void _showSettings() {
     // TODO: Implement settings
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => SettingsScreen()));
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Settings coming soon!')));
@@ -676,49 +683,48 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     // TODO: Implement sign out
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text(
-              'Sign Out',
-              style: AppTypography.titleLarge.copyWith(
-                fontWeight: FontWeight.w700,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Sign Out',
+          style: AppTypography.titleLarge.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to sign out?',
+          style: AppTypography.bodyMedium.copyWith(letterSpacing: 0.3),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Cancel',
+              style: AppTypography.labelLarge.copyWith(
+                fontWeight: FontWeight.w600,
                 letterSpacing: 0.5,
               ),
             ),
-            content: Text(
-              'Are you sure you want to sign out?',
-              style: AppTypography.bodyMedium.copyWith(letterSpacing: 0.3),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(
-                  'Cancel',
-                  style: AppTypography.labelLarge.copyWith(
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  // TODO: Implement sign out logic
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Signed out successfully')),
-                  );
-                },
-                child: Text(
-                  'Sign Out',
-                  style: AppTypography.labelLarge.copyWith(
-                    color: AppColors.error,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ],
           ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // TODO: Implement sign out logic
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Signed out successfully')),
+              );
+            },
+            child: Text(
+              'Sign Out',
+              style: AppTypography.labelLarge.copyWith(
+                color: AppColors.error,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

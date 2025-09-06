@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:opop/features/auth/preference/auth_preference.dart';
+
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_constants.dart';
-import '../../../chat/presentation/screens/chat_list_screen.dart';
+import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/services/auth_service.dart';
+import '../../../auth/presentation/screens/login_screen.dart';
+import '../../../navigation/presentation/screens/main_navigation_screen.dart';
 
 /// Splash screen for MBTI Explorer app
 /// Features animated MBTI branding and smooth transition to home
@@ -24,11 +28,25 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<double> _textSlide;
   late Animation<double> _fadeAnimation;
 
+  final AuthService _authService = AuthService();
+
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
     _startAnimationSequence();
+  }
+
+  void isLogin() async {
+    final _authPreference = AuthPreference();
+    final loggedIn = await _authPreference.getLoginData();
+    if (loggedIn != null) {
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
+      );
+    }
   }
 
   void _initializeAnimations() {
@@ -81,23 +99,64 @@ class _SplashScreenState extends State<SplashScreen>
     // Start fade animation
     await _fadeController.forward();
 
-    // Wait a bit then navigate
+    // Wait a bit then check authentication and navigate
     await Future.delayed(const Duration(milliseconds: 500));
 
     if (mounted) {
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder:
-              (context, animation, secondaryAnimation) =>
-                  const ChatListScreen(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          transitionDuration: const Duration(milliseconds: 800),
-        ),
-      );
+      await _checkAuthenticationAndNavigate();
     }
   }
+
+  Future<void> _checkAuthenticationAndNavigate() async {
+    try {
+      if (mounted) {
+        // 1. Instantiate your preference class
+        final authPreference = AuthPreference();
+
+        // 2. Check for login data asynchronously
+        final loggedInUser = await authPreference.getLoginData();
+
+        // 3. Determine the next screen based on login status
+        Widget nextScreen;
+        if (loggedInUser != null) {
+          // User data exists, they are logged in.
+          nextScreen = const MainNavigationScreen();
+        } else {
+          // No user data, they need to log in.
+          nextScreen = const LoginScreen();
+        }
+
+        // 4. Navigate with a fade transition (your existing code is perfect)
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+            transitionDuration: const Duration(milliseconds: 800),
+          ),
+        );
+      }
+    } catch (e) {
+      // If there's any error, it's safest to go to the login screen.
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const LoginScreen(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+            transitionDuration: const Duration(milliseconds: 800),
+          ),
+        );
+      }
+    }
+  }
+
+
 
   @override
   void dispose() {
@@ -174,13 +233,12 @@ class _SplashScreenState extends State<SplashScreen>
                             offset: Offset(0, _textSlide.value),
                             child: Text(
                               AppConstants.appName,
-                              style: Theme.of(
-                                context,
-                              ).textTheme.displayMedium?.copyWith(
-                                color: AppColors.textInverse,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.2,
-                              ),
+                              style: Theme.of(context).textTheme.displayMedium
+                                  ?.copyWith(
+                                    color: AppColors.textInverse,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 1.2,
+                                  ),
                             ),
                           );
                         },
@@ -196,12 +254,13 @@ class _SplashScreenState extends State<SplashScreen>
                             opacity: _fadeAnimation.value,
                             child: Text(
                               AppConstants.appDescription,
-                              style: Theme.of(
-                                context,
-                              ).textTheme.bodyLarge?.copyWith(
-                                color: AppColors.textInverse.withOpacity(0.9),
-                                height: 1.5,
-                              ),
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.copyWith(
+                                    color: AppColors.textInverse.withOpacity(
+                                      0.9,
+                                    ),
+                                    height: 1.5,
+                                  ),
                               textAlign: TextAlign.center,
                             ),
                           );
@@ -261,13 +320,11 @@ class _SplashScreenState extends State<SplashScreen>
                                 const SizedBox(height: AppSpacing.md),
                                 Text(
                                   'Discovering your personality...',
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.textInverse.withOpacity(
-                                      0.8,
-                                    ),
-                                  ),
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: AppColors.textInverse
+                                            .withOpacity(0.8),
+                                      ),
                                 ),
                               ],
                             ),
