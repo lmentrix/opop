@@ -351,9 +351,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   void _navigateToNewChat() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const NewChatScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const NewChatScreen()));
   }
 
   @override
@@ -372,11 +372,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         onPressed: _navigateToNewChat,
         backgroundColor: AppColors.primary,
         elevation: 4,
-        child: Icon(
-          Icons.add_comment,
-          color: AppColors.textInverse,
-          size: 24,
-        ),
+        child: Icon(Icons.add_comment, color: AppColors.textInverse, size: 24),
       ),
     );
   }
