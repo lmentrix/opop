@@ -1,0 +1,26 @@
+Data Passing Sample Structure
+===============================
+
+📁 lib/features/data_passing_sample/
+├── 📄 README.md                           # Comprehensive documentation
+├── 📄 main_demo.dart                       # Demo entry point
+├── 📁 data/
+│   └── 📁 models/
+│       └── 📄 friend_model.dart           # Friend data model
+└── 📁 presentation/
+    └── 📁 screens/
+        ├── 📄 friends_list_screen.dart     # Source screen (sends data)
+        └── 📄 chat_detail_screen.dart      # Destination screen (receives data)
+
+🎯 DEMONSTRATES: How to pass "Emma Davis" data from friends list to chat screen
+
+🔧 METHODS SHOWN:
+1. Constructor parameters (recommended)
+2. Route arguments (alternative)
+3. Model-based data structure
+4. Type-safe data passing
+
+✅ COMPILATION STATUS: No errors found
+✅ BUILD STATUS: Successful
+
+🚀 TO RUN: flutter run -t lib/features/data_passing_sample/main_demo.dart

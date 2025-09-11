@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:opop/features/matching/presentation/screens/matching_screen.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -6,7 +7,6 @@ import '../../../../core/constants/app_typography.dart';
 import '../../../chat/presentation/screens/chat_list_screen.dart';
 import '../../../discovery/presentation/screens/discovery_screen.dart';
 import '../../../friends/presentation/screens/friends_screen.dart';
-import '../../../home/presentation/screens/home_screen.dart';
 import '../../../settings/presentation/screens/settings_screen.dart';
 
 /// Main navigation screen with bottom navigation bar
@@ -23,7 +23,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   late PageController _pageController;
 
   final List<Widget> _screens = [
-    const HomeScreen(),
+    const MatchingScreen(),
     const ChatListScreen(),
     const DiscoveryScreen(),
     const FriendsScreen(),

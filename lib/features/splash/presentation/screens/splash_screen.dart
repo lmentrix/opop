@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:opop/features/auth/preference/auth_preference.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/services/auth_service.dart';
-import '../../../auth/presentation/screens/login_screen.dart';
-import '../../../navigation/presentation/screens/main_navigation_screen.dart';
 
 /// Splash screen for MBTI Explorer app
 /// Features animated MBTI branding and smooth transition to home
@@ -28,8 +26,6 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<double> _textSlide;
   late Animation<double> _fadeAnimation;
 
-  final AuthService _authService = AuthService();
-
   @override
   void initState() {
     super.initState();
@@ -37,34 +33,22 @@ class _SplashScreenState extends State<SplashScreen>
     _startAnimationSequence();
   }
 
-  void isLogin() async {
-    final _authPreference = AuthPreference();
-    final loggedIn = await _authPreference.getLoginData();
-    if (loggedIn != null) {
-    } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
-      );
-    }
-  }
-
   void _initializeAnimations() {
-    // Logo animation controller
+    // Logo animation controller (reduced duration)
     _logoController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
 
-    // Text animation controller
+    // Text animation controller (reduced duration)
     _textController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
 
-    // Fade animation controller
+    // Fade animation controller (reduced duration)
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     );
 
@@ -99,8 +83,8 @@ class _SplashScreenState extends State<SplashScreen>
     // Start fade animation
     await _fadeController.forward();
 
-    // Wait a bit then check authentication and navigate
-    await Future.delayed(const Duration(milliseconds: 500));
+    // Reduced wait time before navigation
+    await Future.delayed(const Duration(milliseconds: 300));
 
     if (mounted) {
       await _checkAuthenticationAndNavigate();
@@ -110,53 +94,52 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _checkAuthenticationAndNavigate() async {
     try {
       if (mounted) {
-        // 1. Instantiate your preference class
-        final authPreference = AuthPreference();
+        // Add timeout to prevent infinite loading
+        final authResult = await Future.any([
+          _checkAuthStatus(),
+          Future.delayed(const Duration(seconds: 3), () => 'timeout'),
+        ]);
 
-        // 2. Check for login data asynchronously
-        final loggedInUser = await authPreference.getLoginData();
-
-        // 3. Determine the next screen based on login status
-        Widget nextScreen;
-        if (loggedInUser != null) {
-          // User data exists, they are logged in.
-          nextScreen = const MainNavigationScreen();
-        } else {
-          // No user data, they need to log in.
-          nextScreen = const LoginScreen();
+        if (authResult == 'timeout') {
+          // Timeout occurred, navigate to login
+          if (mounted) {
+            context.go('/login');
+          }
+          return;
         }
 
-        // 4. Navigate with a fade transition (your existing code is perfect)
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-            transitionDuration: const Duration(milliseconds: 800),
-          ),
-        );
+        // Check if user is logged in
+        final isLoggedIn = authResult as bool;
+
+        if (mounted) {
+          if (isLoggedIn) {
+            context.go('/main'); // Navigate to main app
+          } else {
+            context.go('/login'); // Navigate to login
+          }
+        }
       }
     } catch (e) {
-      // If there's any error, it's safest to go to the login screen.
+      // If there's any error, go to login screen using GoRouter
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const LoginScreen(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-            transitionDuration: const Duration(milliseconds: 800),
-          ),
-        );
+        context.go('/login');
       }
     }
   }
 
-
+  Future<bool> _checkAuthStatus() async {
+    try {
+      final authPreference = AuthPreference();
+      // Add timeout to prevent hanging
+      final token = await Future.any([
+        authPreference.getLoginData(),
+        Future.delayed(const Duration(seconds: 2), () => null),
+      ]);
+      return token != null && token.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
+  }
 
   @override
   void dispose() {

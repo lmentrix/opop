@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:opop/features/profile/presentation/screens/edit_profile_screen.dart';
+import 'package:opop/features/profile/presentation/screens/profile_provider.dart';
 import 'package:opop/features/settings/presentation/screens/settings_screen.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -64,8 +66,11 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     // Simulate loading delay
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
+        // Load dummy user data
+        final userData = UserProfile.dummyData();
+
         setState(() {
-          _userProfile = UserProfile.dummyData();
+          _userProfile = userData;
           _isLoading = false;
         });
       }
@@ -180,30 +185,33 @@ class _UserProfileScreenState extends State<UserProfileScreen>
       );
     }
 
-    return GestureDetector(
-      //TODO: show changed p
-      onTap: () {},
-      child: Container(
-        width: 80,
-        height: 80,
-        decoration: BoxDecoration(
-          color: AppColors.textInverse,
-          borderRadius: BorderRadius.circular(AppSpacing.full),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.shadow.withOpacity(0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+    return Consumer<ProfileProvider>(
+      builder: (context, profileProvider, child) {
+        return GestureDetector(
+          onTap: _changeProfilePicture,
+          child: Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppColors.textInverse,
+              borderRadius: BorderRadius.circular(AppSpacing.full),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.shadow.withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            _userProfile?.avatar ?? '👤',
-            style: AppTypography.displaySmall.copyWith(fontSize: 40),
+            child: Center(
+              child: Text(
+                profileProvider.selectedAvatar,
+                style: AppTypography.displaySmall.copyWith(fontSize: 40),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -604,13 +612,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
 
   // Action methods
   void _showEditProfile() {
-    // TODO: Implement edit profile
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (context) => const EditProfileScreen()));
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Edit profile coming soon!')));
   }
 
   void _showSettings() {
@@ -624,10 +628,10 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   }
 
   void _changeProfilePicture() {
-    // TODO: Implement profile picture change
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Profile picture change coming soon!')),
-    );
+    // Navigate to edit profile screen with a focus on changing the profile picture
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const EditProfileScreen()));
   }
 
   void _showAchievementDetails(dynamic achievement) {

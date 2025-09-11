@@ -54,6 +54,7 @@ class AuthService {
       //save pref
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('id', response.body);
+      await prefs.setString('userName', response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = jsonDecode(

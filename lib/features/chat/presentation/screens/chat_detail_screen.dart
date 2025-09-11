@@ -328,29 +328,28 @@ class _ChatDetailScreenState extends State<ChatDetailScreen>
             break;
         }
       },
-      itemBuilder:
-          (context) => [
-            const PopupMenuItem(
-              value: 'info',
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline),
-                  SizedBox(width: AppSpacing.sm),
-                  Text('Conversation Info'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'clear',
-              child: Row(
-                children: [
-                  Icon(Icons.clear_all),
-                  SizedBox(width: AppSpacing.sm),
-                  Text('Clear Chat'),
-                ],
-              ),
-            ),
-          ],
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: 'info',
+          child: Row(
+            children: [
+              Icon(Icons.info_outline),
+              SizedBox(width: AppSpacing.sm),
+              Text('Conversation Info'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'clear',
+          child: Row(
+            children: [
+              Icon(Icons.clear_all),
+              SizedBox(width: AppSpacing.sm),
+              Text('Clear Chat'),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -566,59 +565,55 @@ class _ChatDetailScreenState extends State<ChatDetailScreen>
   void _showClearChatDialog() {
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Clear Chat'),
-            content: const Text(
-              'Are you sure you want to clear all messages? This action cannot be undone.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    _messages.clear();
-                  });
-                  Navigator.of(context).pop();
-                },
-                child: Text('Clear', style: TextStyle(color: AppColors.error)),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text('Clear Chat'),
+        content: const Text(
+          'Are you sure you want to clear all messages? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
           ),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _messages.clear();
+              });
+              Navigator.of(context).pop();
+            },
+            child: Text('Clear', style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
     );
   }
 
   void _showConversationInfo() {
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text(widget.conversation.title),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Type: ${_getConversationTypeName()}'),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  'Participants: ${widget.conversation.participantIds.length}',
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text('Created: ${_formatDate(widget.conversation.createdAt)}'),
-                const SizedBox(height: AppSpacing.sm),
-                Text('Messages: ${_messages.length}'),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Close'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: Text(widget.conversation.title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Type: ${_getConversationTypeName()}'),
+            const SizedBox(height: AppSpacing.sm),
+            Text('Participants: ${widget.conversation.participantIds.length}'),
+            const SizedBox(height: AppSpacing.sm),
+            Text('Created: ${_formatDate(widget.conversation.createdAt)}'),
+            const SizedBox(height: AppSpacing.sm),
+            Text('Messages: ${_messages.length}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
           ),
+        ],
+      ),
     );
   }
 

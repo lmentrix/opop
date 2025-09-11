@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:opop/features/profile/presentation/screens/profile_provider.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -33,29 +35,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     'ISTP', 'ISFP', 'ESTP', 'ESFP', // Explorers
   ];
 
-  final List<String> _avatarOptions = [
-    '👩‍💻',
-    '👨‍💻',
-    '🎨',
-    '📚',
-    '💡',
-    '🎭',
-    '📊',
-    '🎵',
-    '🌟',
-    '🔬',
-    '✍️',
-    '🎯',
-    '🧠',
-    '💼',
-    '🎪',
-    '🌱',
-  ];
+  final List<String> _avatarOptions = [];
 
   @override
   void initState() {
     super.initState();
     _initializeControllers();
+    final profileProvider = Provider.of<ProfileProvider>(
+      context,
+      listen: false,
+    );
+    _avatarOptions.addAll(profileProvider.avatarOptions);
     _loadUserData();
   }
 
@@ -85,13 +75,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void _loadUserData() {
     // Load dummy user data
     final userData = UserProfile.dummyData();
+    final profileProvider = Provider.of<ProfileProvider>(
+      context,
+      listen: false,
+    );
+
     _displayNameController.text = userData.displayName;
     _fullNameController.text = userData.fullName;
     _emailController.text = userData.email;
     _locationController.text = userData.location;
     _bioController.text = userData.bio;
     _selectedMBTI = userData.mbtiType;
-    _selectedAvatar = userData.avatar;
+    _selectedAvatar = profileProvider.selectedAvatar; // Get from provider
   }
 
   @override
@@ -106,38 +101,46 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildAppBar(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSpacing.screenPadding),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildProfilePictureSection(),
-                      const SizedBox(height: AppSpacing.xl),
-                      _buildPersonalInfoSection(),
-                      const SizedBox(height: AppSpacing.xl),
-                      _buildMBTISection(),
-                      const SizedBox(height: AppSpacing.xl),
-                      _buildLocationSection(),
-                      const SizedBox(height: AppSpacing.xl),
-                      _buildBioSection(),
-                      const SizedBox(height: AppSpacing.xxxl),
-                    ],
+    return Consumer<ProfileProvider>(
+      builder: (context, profileProvider, child) {
+        if (_selectedAvatar != profileProvider.selectedAvatar) {
+          _selectedAvatar = profileProvider.selectedAvatar;
+          _hasChanges = true;
+        }
+        return Scaffold(
+          body: SafeArea(
+            child: Column(
+              children: [
+                _buildAppBar(),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(AppSpacing.screenPadding),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildProfilePictureSection(),
+                          const SizedBox(height: AppSpacing.xl),
+                          _buildPersonalInfoSection(),
+                          const SizedBox(height: AppSpacing.xl),
+                          _buildMBTISection(),
+                          const SizedBox(height: AppSpacing.xl),
+                          _buildLocationSection(),
+                          const SizedBox(height: AppSpacing.xl),
+                          _buildBioSection(),
+                          const SizedBox(height: AppSpacing.xxxl),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                _buildSaveButton(),
+              ],
             ),
-            _buildSaveButton(),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -623,6 +626,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                     return GestureDetector(
                       onTap: () {
+                        final profileProvider = Provider.of<ProfileProvider>(
+                          context,
+                          listen: false,
+                        );
+                        profileProvider.updateAvatar(
+                          avatar,
+                        ); // Update provider state
                         setState(() {
                           _selectedAvatar = avatar;
                           _hasChanges = true;
@@ -720,6 +730,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() {
       _hasChanges = false;
     });
+
+    // Reset avatar from provider
+    final profileProvider = Provider.of<ProfileProvider>(
+      context,
+      listen: false,
+    );
+    setState(() {
+      _selectedAvatar = profileProvider.selectedAvatar;
+    });
+
     _loadUserData();
   }
 
@@ -731,6 +751,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() {
       _isLoading = true;
     });
+
+    // Get provider instance
+    final profileProvider = Provider.of<ProfileProvider>(
+      context,
+      listen: false,
+    );
+
+    // Update provider with the selected avatar
+    profileProvider.updateAvatar(_selectedAvatar);
 
     // Simulate API call
     await Future.delayed(const Duration(seconds: 2));

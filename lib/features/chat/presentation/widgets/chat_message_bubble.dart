@@ -1,5 +1,7 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
+
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
@@ -11,6 +13,7 @@ class ChatMessageBubble extends StatelessWidget {
   final bool isUser;
   final bool showAvatar;
   final bool showTime;
+  final String? conversationId;
 
   const ChatMessageBubble({
     super.key,
@@ -18,6 +21,7 @@ class ChatMessageBubble extends StatelessWidget {
     required this.isUser,
     this.showAvatar = false,
     this.showTime = false,
+    this.conversationId,
   });
 
   @override
@@ -26,15 +30,17 @@ class ChatMessageBubble extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment:
-            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         children: [
           if (!isUser && showAvatar) _buildAvatar(),
           if (!isUser && showAvatar) const SizedBox(width: AppSpacing.sm),
           Flexible(
             child: Column(
-              crossAxisAlignment:
-                  isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment: isUser
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
               children: [
                 if (!isUser && showAvatar) _buildSenderName(),
                 if (!isUser && showAvatar)
@@ -230,15 +236,12 @@ class ChatMessageBubble extends StatelessWidget {
     // For image messages, the content is the full image path
     String imagePath = message.content;
     String? fileName = message.metadata?['fileName'];
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          constraints: const BoxConstraints(
-            maxWidth: 250,
-            maxHeight: 300,
-          ),
+          constraints: const BoxConstraints(maxWidth: 250, maxHeight: 300),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppSpacing.sm),
             border: Border.all(color: AppColors.outline.withOpacity(0.3)),
@@ -302,9 +305,7 @@ class ChatMessageBubble extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Failed to load image',
-            style: AppTypography.bodySmall.copyWith(
-              color: AppColors.error,
-            ),
+            style: AppTypography.bodySmall.copyWith(color: AppColors.error),
           ),
         ],
       ),
