@@ -11,12 +11,18 @@ class ChatListItem extends StatefulWidget {
   final ChatConversation conversation;
   final VoidCallback onTap;
   final VoidCallback? onAvatarTap;
+  final DismissDirectionCallback? onDismissed;
+  final ConfirmDismissCallback? confirmDismissCallback;
+  final DismissDirection? direction;
 
   const ChatListItem({
     super.key,
     required this.conversation,
     required this.onTap,
     this.onAvatarTap,
+    this.onDismissed,
+    this.confirmDismissCallback,
+    this.direction,
   });
 
   @override
@@ -147,13 +153,24 @@ class _ChatListItemState extends State<ChatListItem>
                     behavior: HitTestBehavior.opaque,
                     child: Padding(
                       padding: const EdgeInsets.all(AppSpacing.md),
-                      child: Row(
-                        children: [
-                          _buildAvatar(),
-                          const SizedBox(width: AppSpacing.md),
-                          Expanded(child: _buildContent()),
-                          _buildTrailingInfo(),
-                        ],
+                      child: Dismissible(
+                        key: UniqueKey(),
+                        direction: DismissDirection.horizontal,
+                        onDismissed: (direction) {
+                          if (widget.onDismissed != null) {
+                            widget.onDismissed!(
+                              direction,
+                            ); // Ensure callback exists
+                          }
+                        },
+                        child: Row(
+                          children: [
+                            _buildAvatar(),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(child: _buildContent()),
+                            _buildTrailingInfo(),
+                          ],
+                        ),
                       ),
                     ),
                   ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:opop/features/auth/preference/auth_preference.dart';
+import 'package:opop/features/chat/presentation/data/chat_list_data.dart';
 import 'package:opop/features/profile/presentation/screens/friend_profile_screen.dart';
 
 import '../../../../core/constants/app_colors.dart';
@@ -27,6 +28,9 @@ class ChatListScreen extends StatefulWidget {
 class _ChatListScreenState extends State<ChatListScreen> {
   List<ChatConversation> _conversations = [];
   List<ChatConversation> _filteredConversations = [];
+  final _dummyConversations = ChatModel()
+      .getConversations(); //List<ChatConversation>
+
   String _searchQuery = '';
   ConversationType? _selectedFilter;
   bool _isLoading = false;
@@ -38,9 +42,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   //TODO: get userData
-  void _showUserData() async {
+  void _showUserData(Future<String?> userId) async {
     final authPreference = AuthPreference();
+    userId = authPreference.getLoginUsername();
     authPreference.getLoginData();
+    Text(userId.toString());
   }
 
   void _loadConversations() {
@@ -49,7 +55,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     // Simulate loading delay
     Future.delayed(const Duration(milliseconds: 500), () {
       setState(() {
-        _conversations = _getDummyConversations();
+        _conversations = _dummyConversations;
         _applyFilters();
         _isLoading = false;
       });
@@ -79,7 +85,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     await Future.delayed(const Duration(milliseconds: 500));
 
     setState(() {
-      _conversations = _getDummyConversations();
+      _conversations = _dummyConversations;
       _applyFilters();
       _isLoading = false;
     });
@@ -164,179 +170,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
     return _conversations.fold(0, (sum, conv) => sum + conv.unreadCount);
   }
 
-  List<ChatConversation> _getDummyConversations() {
-    return [
-      ChatConversation(
-        id: '1',
-        title: 'Sarah Chen (ENFP)',
-        lastMessage: 'Hey! How are you doing?',
-        lastMessageTime: DateTime.now().subtract(const Duration(minutes: 5)),
-        lastSenderName: 'Sarah Chen',
-        lastSenderAvatar: '👩‍🦰',
-        unreadCount: 2,
-        participantIds: ['user_1', 'user_2'],
-        type: ConversationType.personal,
-        metadata: {'mbtiType': 'ENFP'},
-        createdAt: DateTime.now().subtract(const Duration(days: 30)),
-        updatedAt: DateTime.now().subtract(const Duration(minutes: 5)),
-      ),
-      ChatConversation(
-        id: '2',
-        title: 'MBTI Discussion Group',
-        lastMessage: 'Alex: I think INTJs are the most strategic',
-        lastMessageTime: DateTime.now().subtract(const Duration(hours: 1)),
-        lastSenderName: 'Alex Rivera',
-        lastSenderAvatar: '👨‍💼',
-        unreadCount: 0,
-        participantIds: ['user_1', 'user_2', 'user_3'],
-        type: ConversationType.group,
-        metadata: {'topic': 'Personality Types'},
-        createdAt: DateTime.now().subtract(const Duration(days: 15)),
-        updatedAt: DateTime.now().subtract(const Duration(hours: 1)),
-      ),
-      ChatConversation(
-        id: '3',
-        title: 'Personality Assessment Support',
-        lastMessage: 'Your assessment results are ready!',
-        lastMessageTime: DateTime.now().subtract(const Duration(hours: 3)),
-        lastSenderName: 'MBTI Assistant',
-        lastSenderAvatar: '🤖',
-        unreadCount: 1,
-        participantIds: ['user_1', 'support_bot'],
-        type: ConversationType.support,
-        metadata: {'assessmentId': 'mbti_full_2024'},
-        createdAt: DateTime.now().subtract(const Duration(days: 7)),
-        updatedAt: DateTime.now().subtract(const Duration(hours: 3)),
-      ),
-      ChatConversation(
-        id: '4',
-        title: 'Maya Patel (INTJ)',
-        lastMessage: 'The new project deadline has been moved to next week',
-        lastMessageTime: DateTime.now().subtract(const Duration(minutes: 15)),
-        lastSenderName: 'Maya Patel',
-        lastSenderAvatar: '👩‍🔬',
-        unreadCount: 3,
-        participantIds: ['user_1', 'user_4'],
-        type: ConversationType.personal,
-        metadata: {'mbtiType': 'INTJ'},
-        createdAt: DateTime.now().subtract(const Duration(days: 45)),
-        updatedAt: DateTime.now().subtract(const Duration(minutes: 15)),
-      ),
-      ChatConversation(
-        id: '5',
-        title: 'David Park (ESFJ)',
-        lastMessage: 'Thanks for helping me with the presentation!',
-        lastMessageTime: DateTime.now().subtract(const Duration(minutes: 30)),
-        lastSenderName: 'David Park',
-        lastSenderAvatar: '👨‍⚕️',
-        unreadCount: 0,
-        participantIds: ['user_1', 'user_5'],
-        type: ConversationType.personal,
-        metadata: {'mbtiType': 'ESFJ'},
-        createdAt: DateTime.now().subtract(const Duration(days: 20)),
-        updatedAt: DateTime.now().subtract(const Duration(minutes: 30)),
-      ),
-      ChatConversation(
-        id: '6',
-        title: 'Creative Thinkers Hub',
-        lastMessage: 'Emma: Let\'s brainstorm some new ideas for the project',
-        lastMessageTime: DateTime.now().subtract(const Duration(hours: 2)),
-        lastSenderName: 'Emma Wilson',
-        lastSenderAvatar: '👩‍💻',
-        unreadCount: 5,
-        participantIds: ['user_1', 'user_6', 'user_7', 'user_8'],
-        type: ConversationType.group,
-        metadata: {'topic': 'Creative Projects'},
-        createdAt: DateTime.now().subtract(const Duration(days: 10)),
-        updatedAt: DateTime.now().subtract(const Duration(hours: 2)),
-      ),
-      ChatConversation(
-        id: '7',
-        title: 'Jordan Kim (ENTP)',
-        lastMessage: 'Did you see the latest tech news?',
-        lastMessageTime: DateTime.now().subtract(const Duration(minutes: 45)),
-        lastSenderName: 'Jordan Kim',
-        lastSenderAvatar: '👨‍🎓',
-        unreadCount: 0,
-        participantIds: ['user_1', 'user_9'],
-        type: ConversationType.personal,
-        metadata: {'mbtiType': 'ENTP'},
-        createdAt: DateTime.now().subtract(const Duration(days: 35)),
-        updatedAt: DateTime.now().subtract(const Duration(minutes: 45)),
-      ),
-      ChatConversation(
-        id: '8',
-        title: 'Lisa Chang (INFP)',
-        lastMessage: 'I found this amazing coffee shop we should visit',
-        lastMessageTime: DateTime.now().subtract(const Duration(hours: 4)),
-        lastSenderName: 'Lisa Chang',
-        lastSenderAvatar: '👩‍🏫',
-        unreadCount: 1,
-        participantIds: ['user_1', 'user_10'],
-        type: ConversationType.personal,
-        metadata: {'mbtiType': 'INFP'},
-        createdAt: DateTime.now().subtract(const Duration(days: 25)),
-        updatedAt: DateTime.now().subtract(const Duration(hours: 4)),
-      ),
-      ChatConversation(
-        id: '9',
-        title: 'Chris Thompson (ISFP)',
-        lastMessage: 'The art exhibition was incredible!',
-        lastMessageTime: DateTime.now().subtract(const Duration(hours: 6)),
-        lastSenderName: 'Chris Thompson',
-        lastSenderAvatar: '👨‍🎨',
-        unreadCount: 0,
-        participantIds: ['user_1', 'user_11'],
-        type: ConversationType.personal,
-        metadata: {'mbtiType': 'ISFP'},
-        createdAt: DateTime.now().subtract(const Duration(days: 12)),
-        updatedAt: DateTime.now().subtract(const Duration(hours: 6)),
-      ),
-      ChatConversation(
-        id: '10',
-        title: 'Study Group - Psychology',
-        lastMessage: 'Prof: Remember to submit your assignments by Friday',
-        lastMessageTime: DateTime.now().subtract(const Duration(minutes: 20)),
-        lastSenderName: 'Professor Davis',
-        lastSenderAvatar: '👨‍🏫',
-        unreadCount: 2,
-        participantIds: ['user_1', 'user_12', 'user_13', 'user_14', 'user_15'],
-        type: ConversationType.group,
-        metadata: {'topic': 'Psychology Studies'},
-        createdAt: DateTime.now().subtract(const Duration(days: 5)),
-        updatedAt: DateTime.now().subtract(const Duration(minutes: 20)),
-      ),
-      ChatConversation(
-        id: '11',
-        title: 'Rachel Green (ESTP)',
-        lastMessage: 'Wanna go hiking this weekend?',
-        lastMessageTime: DateTime.now().subtract(const Duration(minutes: 10)),
-        lastSenderName: 'Rachel Green',
-        lastSenderAvatar: '👩‍🦱',
-        unreadCount: 1,
-        participantIds: ['user_1', 'user_16'],
-        type: ConversationType.personal,
-        metadata: {'mbtiType': 'ESTP'},
-        createdAt: DateTime.now().subtract(const Duration(days: 18)),
-        updatedAt: DateTime.now().subtract(const Duration(minutes: 10)),
-      ),
-      ChatConversation(
-        id: '12',
-        title: 'Tech Innovators',
-        lastMessage: 'Mike: The new AI model just broke performance records!',
-        lastMessageTime: DateTime.now().subtract(const Duration(minutes: 25)),
-        lastSenderName: 'Mike Johnson',
-        lastSenderAvatar: '👨‍💻',
-        unreadCount: 8,
-        participantIds: ['user_1', 'user_17', 'user_18', 'user_19'],
-        type: ConversationType.group,
-        metadata: {'topic': 'Technology & Innovation'},
-        createdAt: DateTime.now().subtract(const Duration(days: 8)),
-        updatedAt: DateTime.now().subtract(const Duration(minutes: 25)),
-      ),
-    ];
-  }
-
   void _navigateToProfile() {
     Navigator.of(
       context,
@@ -351,9 +184,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   void _navigateToNewChat() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const NewChatScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const NewChatScreen()));
   }
 
   @override
@@ -372,11 +205,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         onPressed: _navigateToNewChat,
         backgroundColor: AppColors.primary,
         elevation: 4,
-        child: Icon(
-          Icons.add_comment,
-          color: AppColors.textInverse,
-          size: 24,
-        ),
+        child: Icon(Icons.add_comment, color: AppColors.textInverse, size: 24),
       ),
     );
   }
@@ -552,6 +381,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           final conversation = _filteredConversations[index];
           return Container(
             decoration: BoxDecoration(
+              color: Colors.red,
               boxShadow: AppShadows.subtle,
               borderRadius: BorderRadius.circular(AppSpacing.md),
             ),
@@ -560,6 +390,18 @@ class _ChatListScreenState extends State<ChatListScreen> {
               conversation: conversation,
               onTap: () => _onConversationTap(conversation),
               onAvatarTap: () => _onAvatarTap(),
+              direction: DismissDirection.endToStart,
+              onDismissed: (direction) {
+                final removedConversation = _filteredConversations[index];
+                setState(() {
+                  // Remove from original list
+                  _conversations.removeWhere(
+                    (conv) => conv.id == removedConversation.id,
+                  );
+                  // Reapply filters to update filtered list
+                  _applyFilters();
+                });
+              },
             ),
           );
         },

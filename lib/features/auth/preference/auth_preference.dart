@@ -27,6 +27,16 @@ class AuthPreference {
     return prefs.getString(_accessTokenKey);
   }
 
+  Future<String?> getLoginId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_id);
+  }
+
+  Future<String?> getLoginUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_username);
+  }
+
   // Optional: Clear login data
   Future<void> clearLoginData() async {
     final prefs = await SharedPreferences.getInstance();
