@@ -117,7 +117,8 @@ class ChatDummyData {
       ChatConversation(
         id: '9',
         title: 'Emma Wilson (ENFJ)',
-        lastMessage: 'Hey! Did you see the new personality test results? Super excited to discuss!',
+        lastMessage:
+            'Hey! Did you see the new personality test results? Super excited to discuss!',
         lastMessageTime: DateTime.now().subtract(const Duration(minutes: 30)),
         lastSenderName: 'Emma Wilson',
         lastSenderAvatar: '👩‍💻',
