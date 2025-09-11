@@ -1,7 +1,7 @@
 import 'package:opop/features/chat/data/models/chat_conversation.dart';
 
 class ChatModel {
-  List<ChatConversation> _getDummyConversations() {
+  static List<ChatConversation> _getDummyConversations() {
     return [
       ChatConversation(
         id: '1',
@@ -174,5 +174,6 @@ class ChatModel {
     ];
   }
 
-  List<ChatConversation> getConversations() => _getDummyConversations();
+  static List<ChatConversation> get getConversations =>
+      _getDummyConversations();
 }
