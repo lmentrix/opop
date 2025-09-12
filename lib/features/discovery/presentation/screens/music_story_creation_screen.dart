@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:opop/core/constants/app_colors.dart';
 import 'package:opop/core/constants/app_spacing.dart';
 import 'package:opop/core/constants/app_typography.dart';
+import 'package:opop/features/discovery/data/models/music_data.dart';
+import 'package:opop/features/discovery/provider/discovery_provider.dart';
+import 'package:provider/provider.dart';
 
 class MusicStoryCreationScreen extends StatefulWidget {
   const MusicStoryCreationScreen({super.key});
@@ -27,26 +30,9 @@ class _MusicStoryCreationScreenState extends State<MusicStoryCreationScreen>
   double _energyLevel = 0.7;
   bool _isPlaying = false;
 
-  final List<String> _moods = [
-    'Energetic',
-    'Calm',
-    'Happy',
-    'Sad',
-    'Romantic',
-    'Mysterious',
-    'Inspiring',
-  ];
+  final List<String> _moods = MusicData.moods;
 
-  final List<String> _genres = [
-    'Pop',
-    'Rock',
-    'Hip Hop',
-    'Electronic',
-    'Classical',
-    'Jazz',
-    'R&B',
-    'Country',
-  ];
+  final List<String> _genres = MusicData.genres;
 
   final List<Map<String, dynamic>> _recommendedSongs = [
     {
@@ -654,32 +640,57 @@ class _MusicStoryCreationScreenState extends State<MusicStoryCreationScreen>
       _titleController.text.trim().isNotEmpty &&
       _artistController.text.trim().isNotEmpty;
 
-  void _createMusicStory() {
+  void _createMusicStory() async {
     if (!_isFormValid) return;
 
-    // Create music story data
-    final musicStoryData = {
-      'type': 'music',
-      'title': _titleController.text,
-      'artist': _artistController.text,
-      'caption': _captionController.text,
-      'mood': _selectedMood,
-      'genre': _selectedGenre,
-      'energyLevel': _energyLevel,
-      'timestamp': DateTime.now(),
-    };
-
-    // Show success message
+    // Show loading indicator
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Music story created successfully! 🎵'),
-        duration: Duration(seconds: 2),
-        backgroundColor: AppColors.success,
+        content: Text('Creating your MBTI music story...'),
+        duration: Duration(seconds: 1),
       ),
     );
 
-    // Navigate back
-    Navigator.pop(context, musicStoryData);
+    // Create MusicSong object
+    final song = MusicSong(
+      title: _titleController.text,
+      artist: _artistController.text,
+      mood: _selectedMood,
+      genre: _selectedGenre,
+      duration: '3:30', // Default duration
+      energy: _energyLevel,
+    );
+
+    // Use discovery provider to create music story
+    final provider = Provider.of<DiscoveryProvider>(context, listen: false);
+    final success = await provider.createMusicStory(
+      title: 'MBTI Music Story',
+      song: song,
+      description: _captionController.text.isNotEmpty ? _captionController.text : null,
+    );
+
+    if (success) {
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Music story created successfully! 🎵'),
+          duration: Duration(seconds: 2),
+          backgroundColor: AppColors.success,
+        ),
+      );
+
+      // Navigate back
+      Navigator.pop(context, provider.lastCreatedStory);
+    } else {
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to create music story: ${provider.createStoryError}'),
+          duration: const Duration(seconds: 3),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 }
 

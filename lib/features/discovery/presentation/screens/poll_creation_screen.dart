@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:opop/core/constants/app_colors.dart';
 import 'package:opop/core/constants/app_spacing.dart';
 import 'package:opop/core/constants/app_typography.dart';
+import 'package:opop/features/discovery/data/models/poll_data.dart';
+import 'package:opop/features/discovery/provider/discovery_provider.dart';
+import 'package:provider/provider.dart';
 
 class PollCreationScreen extends StatefulWidget {
   const PollCreationScreen({super.key});
@@ -14,11 +17,11 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
   final TextEditingController _questionController = TextEditingController();
   final List<TextEditingController> _optionControllers = [];
   final List<FocusNode> _focusNodes = [];
-  
-  int _durationHours = 24;
+
+  int _durationHours = PollData.defaultDurationHours;
   bool _allowMultipleSelection = false;
   bool _isAnonymous = false;
-  
+
   @override
   void initState() {
     super.initState();
@@ -68,7 +71,9 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
             child: Text(
               'Create',
               style: AppTypography.titleMedium.copyWith(
-                color: _isFormValid ? AppColors.primary : AppColors.textDisabled,
+                color: _isFormValid
+                    ? AppColors.primary
+                    : AppColors.textDisabled,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -112,9 +117,9 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                 ],
               ),
             ),
-            
+
             const Divider(height: 1),
-            
+
             // Poll Options
             Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
@@ -150,9 +155,9 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                 ],
               ),
             ),
-            
+
             const Divider(height: 1),
-            
+
             // Poll Settings
             Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
@@ -167,11 +172,11 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  
+
                   // Duration
                   _buildDurationSelector(),
                   const SizedBox(height: AppSpacing.md),
-                  
+
                   // Multiple Selection
                   _buildSettingToggle(
                     title: 'Allow multiple selection',
@@ -184,7 +189,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                     },
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  
+
                   // Anonymous Poll
                   _buildSettingToggle(
                     title: 'Anonymous poll',
@@ -199,12 +204,11 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: AppSpacing.md),
-            
+
             // Poll Preview
-            if (_questionController.text.isNotEmpty)
-              _buildPollPreview(),
+            if (_questionController.text.isNotEmpty) _buildPollPreview(),
           ],
         ),
       ),
@@ -223,10 +227,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
               margin: const EdgeInsets.only(right: AppSpacing.sm),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.primary,
-                  width: 2,
-                ),
+                border: Border.all(color: AppColors.primary, width: 2),
               ),
               child: Center(
                 child: Text(
@@ -286,10 +287,10 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
             Expanded(
               child: Slider(
                 value: _durationHours.toDouble(),
-                min: 1,
-                max: 168, // 7 days
-                divisions: 167,
-                label: _formatDuration(_durationHours),
+                min: PollData.minDurationHours.toDouble(),
+                max: PollData.maxDurationHours.toDouble(),
+                divisions: PollData.maxDurationHours - 1,
+                label: PollData.formatDuration(_durationHours),
                 activeColor: AppColors.primary,
                 inactiveColor: AppColors.textDisabled,
                 onChanged: (value) {
@@ -310,7 +311,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                 borderRadius: BorderRadius.circular(AppSpacing.md),
               ),
               child: Text(
-                _formatDuration(_durationHours),
+                PollData.formatDuration(_durationHours),
                 style: AppTypography.bodySmall.copyWith(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w600,
@@ -368,9 +369,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
       decoration: BoxDecoration(
         color: AppColors.surfaceVariant.withOpacity(0.3),
         borderRadius: BorderRadius.circular(AppSpacing.lg),
-        border: Border.all(
-          color: AppColors.outline.withOpacity(0.3),
-        ),
+        border: Border.all(color: AppColors.outline.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -393,7 +392,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          
+
           // Question
           Text(
             _questionController.text,
@@ -403,9 +402,11 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          
+
           // Options
-          ..._optionControllers.where((c) => c.text.isNotEmpty).map((controller) {
+          ..._optionControllers.where((c) => c.text.isNotEmpty).map((
+            controller,
+          ) {
             return Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: Container(
@@ -421,10 +422,12 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                       width: 16,
                       height: 16,
                       decoration: BoxDecoration(
-                        shape: _allowMultipleSelection ? BoxShape.rectangle : BoxShape.circle,
+                        shape: _allowMultipleSelection
+                            ? BoxShape.rectangle
+                            : BoxShape.circle,
                         border: Border.all(color: AppColors.primary),
-                        borderRadius: _allowMultipleSelection 
-                            ? BorderRadius.circular(AppSpacing.xs) 
+                        borderRadius: _allowMultipleSelection
+                            ? BorderRadius.circular(AppSpacing.xs)
                             : null,
                       ),
                     ),
@@ -442,31 +445,23 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
               ),
             );
           }).toList(),
-          
+
           const SizedBox(height: AppSpacing.sm),
-          
+
           // Duration Info
           Row(
             children: [
-              Icon(
-                Icons.access_time,
-                color: AppColors.textSecondary,
-                size: 16,
-              ),
+              Icon(Icons.access_time, color: AppColors.textSecondary, size: 16),
               const SizedBox(width: AppSpacing.xs),
               Text(
-                'Duration: ${_formatDuration(_durationHours)}',
+                'Duration: ${PollData.formatDuration(_durationHours)}',
                 style: AppTypography.bodySmall.copyWith(
                   color: AppColors.textSecondary,
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
               if (_allowMultipleSelection)
-                Icon(
-                  Icons.check_box,
-                  color: AppColors.textSecondary,
-                  size: 16,
-                ),
+                Icon(Icons.check_box, color: AppColors.textSecondary, size: 16),
               if (_isAnonymous)
                 Icon(
                   Icons.visibility_off,
@@ -481,13 +476,13 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
   }
 
   void _addOption() {
-    if (_optionControllers.length >= 6) return;
-    
+    if (_optionControllers.length >= PollData.maxOptions) return;
+
     setState(() {
       _optionControllers.add(TextEditingController());
       _focusNodes.add(FocusNode());
     });
-    
+
     // Focus on the new option
     Future.delayed(const Duration(milliseconds: 100), () {
       _focusNodes.last.requestFocus();
@@ -495,8 +490,8 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
   }
 
   void _removeOption(int index) {
-    if (_optionControllers.length <= 2) return;
-    
+    if (_optionControllers.length <= PollData.minOptions) return;
+
     setState(() {
       _optionControllers[index].dispose();
       _focusNodes[index].dispose();
@@ -505,52 +500,62 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
     });
   }
 
-  String _formatDuration(int hours) {
-    if (hours < 24) {
-      return '$hours hour${hours > 1 ? 's' : ''}';
-    } else {
-      final days = hours ~/ 24;
-      return '$days day${days > 1 ? 's' : ''}';
-    }
-  }
-
   bool get _isFormValid {
     if (_questionController.text.trim().isEmpty) return false;
-    
+
     final validOptions = _optionControllers
         .where((c) => c.text.trim().isNotEmpty)
         .length;
-    
-    return validOptions >= 2;
+
+    return validOptions >= PollData.minOptions;
   }
 
-  void _createPoll() {
+  void _createPoll() async {
     if (!_isFormValid) return;
-    
-    // Create poll data
-    final pollData = {
-      'type': 'poll',
-      'question': _questionController.text,
-      'options': _optionControllers
+
+    // Show loading indicator
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Creating your MBTI poll...'),
+        duration: Duration(seconds: 1),
+      ),
+    );
+
+    // Use discovery provider to create poll story
+    final provider = Provider.of<DiscoveryProvider>(context, listen: false);
+    final success = await provider.createPollStory(
+      title: 'MBTI Poll',
+      question: _questionController.text,
+      options: _optionControllers
           .where((c) => c.text.trim().isNotEmpty)
           .map((c) => c.text.trim())
           .toList(),
-      'duration': _durationHours,
-      'allowMultipleSelection': _allowMultipleSelection,
-      'isAnonymous': _isAnonymous,
-      'timestamp': DateTime.now(),
-    };
-    
-    // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Poll created successfully! 📊'),
-        duration: Duration(seconds: 2),
-        backgroundColor: AppColors.success,
-      ),
+      durationHours: _durationHours,
+      allowMultipleSelection: _allowMultipleSelection,
+      isAnonymous: _isAnonymous,
     );
-    
-    // Navigate back
-    Navigator.pop(context, pollData);
+
+    if (success) {
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Poll created successfully! 📊'),
+          duration: Duration(seconds: 2),
+          backgroundColor: AppColors.success,
+        ),
+      );
+
+      // Navigate back
+      Navigator.pop(context, provider.lastCreatedStory);
+    } else {
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to create poll: ${provider.createStoryError}'),
+          duration: const Duration(seconds: 3),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 }

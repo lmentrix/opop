@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:opop/features/chat/presentation/data/chat_friend_data.dart';
+import 'package:opop/features/chat/presentation/providers/chat_list_provider.dart';
+import 'package:provider/provider.dart';
+import 'create_group_chat_screen.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -60,15 +63,38 @@ class _NewChatScreenState extends State<NewChatScreen> {
     });
   }
 
-  void _startNewChat(FriendProfile friend) {
-    // Create a new conversation and navigate to chat detail
-    final newConversation = _createNewConversation(friend);
+  void _startNewChat(FriendProfile friend) async {
+    final provider = Provider.of<ChatListProvider>(context, listen: false);
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => ChatDetailScreen(conversation: newConversation),
-      ),
+    // Use the provider to create a new chat
+    final success = await provider.createPrivateChat(
+      friend.id,
+      friend.name,
+      friend.avatar,
     );
+
+    if (success && mounted) {
+      // Find the newly created conversation
+      final newConversation = provider.conversations.firstWhere(
+        (conv) => conv.title.contains(friend.name),
+        orElse: () => _createNewConversation(friend),
+      );
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => ChatDetailScreen(conversation: newConversation),
+        ),
+      );
+    } else if (mounted) {
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.createChatError ?? 'Failed to create chat'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   ChatConversation _createNewConversation(FriendProfile friend) {
@@ -89,27 +115,100 @@ class _NewChatScreenState extends State<NewChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'New Chat',
-          style: AppTypography.headlineSmall.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w700,
+    return Consumer<ChatListProvider>(
+      builder: (context, provider, child) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(
+              'New Chat',
+              style: AppTypography.headlineSmall.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
           ),
-        ),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+          body: Column(
+            children: [
+              _buildSearchBar(),
+              const SizedBox(height: AppSpacing.md),
+              _buildQuickActions(),
+              const SizedBox(height: AppSpacing.md),
+              _buildFriendsList(),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildQuickActions() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.screenPadding,
+        vertical: AppSpacing.sm,
       ),
-      body: Column(
+      child: Row(
         children: [
-          _buildSearchBar(),
-          const SizedBox(height: AppSpacing.md),
-          _buildFriendsList(),
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const CreateGroupChatScreen()),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.diplomat.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(AppSpacing.md),
+                  border: Border.all(color: AppColors.diplomat.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.sm),
+                      decoration: BoxDecoration(
+                        color: AppColors.diplomat,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.group,
+                        color: AppColors.textInverse,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Create Group',
+                            style: AppTypography.titleSmall.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            'Start a group chat',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -222,90 +321,109 @@ class _NewChatScreenState extends State<NewChatScreen> {
   }
 
   Widget _buildFriendTile(FriendProfile friend) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppSpacing.md),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadow.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(AppSpacing.md),
-        leading: Container(
+    return Consumer<ChatListProvider>(
+      builder: (context, provider, child) {
+        return Container(
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: _getMBTIGradient(friend.mbtiType),
-            ),
-          ),
-          child: CircleAvatar(
-            backgroundColor: Colors.transparent,
-            child: Text(
-              friend.avatar,
-              style: AppTypography.titleLarge.copyWith(
-                color: AppColors.textInverse,
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppSpacing.md),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.shadow.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
               ),
-            ),
+            ],
           ),
-        ),
-        title: Text(
-          friend.name,
-          style: AppTypography.titleMedium.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              friend.mbtiType,
-              style: AppTypography.bodySmall.copyWith(
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w500,
+          child: ListTile(
+            contentPadding: const EdgeInsets.all(AppSpacing.md),
+            leading: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: _getMBTIGradient(friend.mbtiType),
+                ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Row(
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(friend.status),
-                    shape: BoxShape.circle,
+              child: CircleAvatar(
+                backgroundColor: Colors.transparent,
+                child: Text(
+                  friend.avatar,
+                  style: AppTypography.titleLarge.copyWith(
+                    color: AppColors.textInverse,
                   ),
                 ),
-                const SizedBox(width: AppSpacing.xs),
+              ),
+            ),
+            title: Text(
+              friend.name,
+              style: AppTypography.titleMedium.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  friend.status ?? 'Offline',
+                  friend.mbtiType,
                   style: AppTypography.bodySmall.copyWith(
                     color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                if (friend.conversationCount > 0) ...[
-                  const SizedBox(width: AppSpacing.sm),
-                  Text(
-                    '• ${friend.conversationCount} chats',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textDisabled,
+                const SizedBox(height: AppSpacing.xs),
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(friend.status),
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(
+                      friend.status ?? 'Offline',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    if (friend.conversationCount > 0) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(
+                        '• ${friend.conversationCount} chats',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textDisabled,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ],
             ),
-          ],
-        ),
-        trailing: Icon(Icons.chat_bubble_outline, color: AppColors.primary),
-        onTap: () => _startNewChat(friend),
-      ),
+            trailing:
+                provider.isCreatingPrivateChat &&
+                    provider.creatingChatForUserId == friend.id
+                ? SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
+                  )
+                : Icon(Icons.chat_bubble_outline, color: AppColors.primary),
+            onTap:
+                provider.isCreatingPrivateChat &&
+                    provider.creatingChatForUserId == friend.id
+                ? null
+                : () => _startNewChat(friend),
+          ),
+        );
+      },
     );
   }
 

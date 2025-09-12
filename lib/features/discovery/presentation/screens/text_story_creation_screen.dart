@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:opop/core/constants/app_colors.dart';
 import 'package:opop/core/constants/app_spacing.dart';
 import 'package:opop/core/constants/app_typography.dart';
+import 'package:opop/features/discovery/data/models/text_story_data.dart';
+import 'package:opop/features/discovery/provider/discovery_provider.dart';
+import 'package:provider/provider.dart';
 
 class TextStoryCreationScreen extends StatefulWidget {
   const TextStoryCreationScreen({super.key});
@@ -16,9 +19,9 @@ class _TextStoryCreationScreenState extends State<TextStoryCreationScreen> {
   
   Color _selectedBackgroundColor = AppColors.diplomat;
   Color _selectedTextColor = AppColors.textInverse;
-  double _fontSize = 24.0;
-  FontWeight _fontWeight = FontWeight.normal;
-  TextAlign _textAlign = TextAlign.center;
+  double _fontSize = TextStoryData.defaultFontSize;
+  FontWeight _fontWeight = TextStoryData.getFontWeight(TextStoryData.defaultFontWeight);
+  TextAlign _textAlign = TextStoryData.getTextAlign(TextStoryData.defaultTextAlignment);
   
   final List<Color> _backgroundColors = [
     AppColors.diplomat,
@@ -31,18 +34,13 @@ class _TextStoryCreationScreenState extends State<TextStoryCreationScreen> {
     AppColors.success,
   ];
   
-  final List<double> _fontSizes = [16.0, 20.0, 24.0, 28.0, 32.0, 36.0, 42.0];
-  final List<FontWeight> _fontWeights = [
-    FontWeight.normal,
-    FontWeight.w500,
-    FontWeight.bold,
-    FontWeight.w800,
-  ];
-  final List<TextAlign> _textAligns = [
-    TextAlign.left,
-    TextAlign.center,
-    TextAlign.right,
-  ];
+  final List<double> _fontSizes = TextStoryData.fontSizes;
+  final List<FontWeight> _fontWeights = TextStoryData.fontWeightNames
+      .map((name) => TextStoryData.getFontWeight(name))
+      .toList();
+  final List<TextAlign> _textAligns = TextStoryData.textAlignments
+      .map((name) => TextStoryData.getTextAlign(name))
+      .toList();
 
   @override
   void dispose() {
@@ -457,12 +455,18 @@ class _TextStoryCreationScreenState extends State<TextStoryCreationScreen> {
   }
 
   IconData _getAlignmentIcon(TextAlign align) {
-    switch (align) {
-      case TextAlign.left:
+    final alignmentName = TextStoryData.textAlignments.firstWhere(
+      (name) => TextStoryData.getTextAlign(name) == align,
+      orElse: () => TextStoryData.defaultTextAlignment,
+    );
+    final iconName = TextStoryData.getAlignmentIcon(alignmentName);
+    
+    switch (iconName) {
+      case 'format_align_left':
         return Icons.format_align_left;
-      case TextAlign.center:
+      case 'format_align_center':
         return Icons.format_align_center;
-      case TextAlign.right:
+      case 'format_align_right':
         return Icons.format_align_right;
       default:
         return Icons.format_align_center;
@@ -477,33 +481,61 @@ class _TextStoryCreationScreenState extends State<TextStoryCreationScreen> {
 
   bool get _isFormValid => _textController.text.trim().isNotEmpty;
 
-  void _createStory() {
+  void _createStory() async {
     if (!_isFormValid) return;
     
-    // Create story data
-    final storyData = {
-      'type': 'text',
-      'title': _titleController.text,
-      'content': _textController.text,
-      'backgroundColor': _selectedBackgroundColor,
-      'textColor': _selectedTextColor,
-      'fontSize': _fontSize,
-      'fontWeight': _fontWeight,
-      'textAlign': _textAlign,
-      'timestamp': DateTime.now(),
-    };
-    
-    // Show success message
+    // Show loading indicator
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Text story created successfully! 📝'),
-        duration: Duration(seconds: 2),
-        backgroundColor: AppColors.success,
+        content: Text('Creating your MBTI story...'),
+        duration: Duration(seconds: 1),
       ),
     );
     
-    // Navigate back
-    Navigator.pop(context, storyData);
+    // Use discovery provider to create story
+    final provider = Provider.of<DiscoveryProvider>(context, listen: false);
+    final success = await provider.createTextStory(
+      title: _titleController.text.isNotEmpty ? _titleController.text : 'MBTI Story',
+      content: _textController.text,
+      backgroundColor: '#${_selectedBackgroundColor.value.toRadixString(16).substring(2)}',
+      textColor: '#${_selectedTextColor.value.toRadixString(16).substring(2)}',
+      fontSize: _fontSize,
+      fontWeight: _fontWeight == FontWeight.normal 
+          ? 'normal' 
+          : _fontWeight == FontWeight.w500
+              ? 'medium'
+              : _fontWeight == FontWeight.bold
+                  ? 'bold'
+                  : 'extra bold',
+      textAlign: _textAlign == TextAlign.left 
+          ? 'left' 
+          : _textAlign == TextAlign.center
+              ? 'center'
+              : 'right',
+    );
+    
+    if (success) {
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Text story created successfully! 📝'),
+          duration: Duration(seconds: 2),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      
+      // Navigate back
+      Navigator.pop(context, provider.lastCreatedStory);
+    } else {
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to create story: ${provider.createStoryError}'),
+          duration: const Duration(seconds: 3),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 }
 

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:opop/core/routes/app_router.dart';
+import 'package:opop/features/chat/presentation/providers/chat_list_provider.dart';
+import 'package:opop/features/discovery/provider/discovery_provider.dart';
 import 'package:opop/features/profile/presentation/screens/profile_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -11,6 +13,8 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => ProfileProvider()),
+        ChangeNotifierProvider(create: (context) => ChatListProvider()),
+        ChangeNotifierProvider(create: (context) => DiscoveryProvider()),
       ],
       child: const MyApp(),
     ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -6,6 +7,8 @@ import '../../../../core/constants/app_typography.dart';
 import '../../../matching/presentation/screens/matching_screen.dart';
 import '../../../profile/data/models/friend_profile.dart';
 import '../../../profile/presentation/screens/friend_profile_screen.dart';
+import '../../data/models/discovery_data.dart';
+import '../../provider/discovery_provider.dart';
 import '../widgets/discovery_comment_drawer.dart';
 import 'camera_gallery_capture_screen.dart';
 import 'image_viewer_screen.dart';
@@ -27,19 +30,6 @@ class DiscoveryScreen extends StatefulWidget {
 
 class _DiscoveryScreenState extends State<DiscoveryScreen>
     with TickerProviderStateMixin {
-  // Track post states
-  final Map<String, bool> _likedPosts = {};
-  final Map<String, bool> _bookmarkedPosts = {};
-  final Map<String, int> _likeCounts = {};
-  final Map<String, int> _commentCounts = {};
-  final Map<String, int> _shareCounts = {};
-
-  // Track potential matches
-  List<Map<String, dynamic>> _potentialMatches = [];
-
-  // Track all posts including user posts
-  List<Map<String, dynamic>> _allPosts = [];
-
   // Animation controllers
   final Map<String, AnimationController> _likeAnimationControllers = {};
   final Map<String, AnimationController> _bookmarkAnimationControllers = {};
@@ -47,7 +37,14 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
   @override
   void initState() {
     super.initState();
-    _initializePostStates();
+    // Initialize discovery data through provider
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<DiscoveryProvider>(context, listen: false);
+      provider.initializeDiscoveryData();
+    });
+
+    // Initialize animation controllers
+    _initializeAnimationControllers();
   }
 
   @override
@@ -62,151 +59,12 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
     super.dispose();
   }
 
-  void _initializePostStates() {
-    // Initialize with default posts if empty
-    if (_allPosts.isEmpty) {
-      _allPosts = [
-        {
-          'id': '1',
-          'username': 'Alex Chen',
-          'mbtiType': 'INTJ',
-          'avatar': '👩‍💻',
-          'timeAgo': '2h',
-          'postType': 'video',
-          'content':
-              'Just discovered my cognitive functions! Te-Ni-Se-Fi makes so much sense now 🧠✨',
-          'videoThumbnail': '🎬',
-          'likes': 247,
-          'comments': 18,
-          'shares': 5,
-          'gradient': [AppColors.analyst, AppColors.analyst.withOpacity(0.7)],
-          'hashtags': ['#INTJ', '#CognitiveFunctions', '#PersonalityGrowth'],
-        },
-        {
-          'id': '2',
-          'username': 'Sarah Martinez',
-          'mbtiType': 'ENFP',
-          'avatar': '🎨',
-          'timeAgo': '4h',
-          'postType': 'text',
-          'content':
-              'Anyone else get super excited about new ideas but struggle to finish them? 😅 My Ne is showing! What helps you ENFPs stay focused?',
-          'likes': 189,
-          'comments': 34,
-          'shares': 12,
-          'gradient': [AppColors.diplomat, AppColors.diplomat.withOpacity(0.7)],
-          'hashtags': ['#ENFP', '#NewIdeas', '#Motivation'],
-        },
-        {
-          'id': '3',
-          'username': 'Mike Johnson',
-          'mbtiType': 'ESTJ',
-          'avatar': '📊',
-          'timeAgo': '6h',
-          'postType': 'video',
-          'content':
-              'Morning routine that changed my productivity game! Structure + efficiency = success 💪',
-          'videoThumbnail': '⏰',
-          'likes': 156,
-          'comments': 23,
-          'shares': 8,
-          'gradient': [AppColors.sentinel, AppColors.sentinel.withOpacity(0.7)],
-          'hashtags': ['#ESTJ', '#Productivity', '#MorningRoutine'],
-        },
-        {
-          'id': '4',
-          'username': 'Emma Davis',
-          'mbtiType': 'ISFP',
-          'avatar': '🎭',
-          'timeAgo': '8h',
-          'postType': 'image',
-          'content':
-              'Created this art piece inspired by my Fi-Se journey. Colors represent emotions I couldn\'t put into words 🎨💙',
-          'imageThumbnail': '🖼️',
-          'likes': 312,
-          'comments': 45,
-          'shares': 19,
-          'gradient': [AppColors.explorer, AppColors.explorer.withOpacity(0.7)],
-          'hashtags': ['#ISFP', '#Art', '#Emotions', '#SelfExpression'],
-        },
-        {
-          'id': '5',
-          'username': 'David Lee',
-          'mbtiType': 'ENTP',
-          'avatar': '🎵',
-          'timeAgo': '12h',
-          'postType': 'text',
-          'content':
-              'Hot take: MBTI isn\'t about putting people in boxes, it\'s about understanding the boxes we\'re already in so we can think outside them! 🤔💡',
-          'likes': 428,
-          'comments': 67,
-          'shares': 34,
-          'gradient': [AppColors.analyst, AppColors.diplomat],
-          'hashtags': ['#ENTP', '#MBTI', '#Philosophy', '#DeepThoughts'],
-        },
-      ];
-    }
-
-    // Initialize post states
-    for (final post in _allPosts) {
-      final id = post['id'] as String;
-      _likedPosts[id] = false;
-      _bookmarkedPosts[id] = false;
-      _likeCounts[id] = post['likes'] as int;
-      _commentCounts[id] = post['comments'] as int;
-      _shareCounts[id] = post['shares'] as int;
-
-      // Initialize animation controllers
-      _likeAnimationControllers[id] = AnimationController(
-        duration: const Duration(milliseconds: 400),
-        vsync: this,
-      );
-      _bookmarkAnimationControllers[id] = AnimationController(
-        duration: const Duration(milliseconds: 300),
-        vsync: this,
-      );
-    }
-
-    // Initialize potential matches
-    _initializePotentialMatches();
+  void _initializeAnimationControllers() {
+    // Animation controllers will be initialized when posts are loaded
   }
 
   void _initializePotentialMatches() {
-    _potentialMatches = [
-      {
-        'name': 'Sarah Chen',
-        'mbtiType': 'ENFP',
-        'avatar': '🎨',
-        'compatibility': 95,
-        'distance': '2.3 km away',
-        'interests': ['Art', 'Psychology', 'Travel'],
-        'gradient': [AppColors.diplomat, AppColors.diplomat.withOpacity(0.7)],
-        'description':
-            'Creative soul who loves deep conversations about personality types',
-      },
-      {
-        'name': 'Alex Rodriguez',
-        'mbtiType': 'INFJ',
-        'avatar': '📚',
-        'compatibility': 88,
-        'distance': '5.1 km away',
-        'interests': ['Books', 'Philosophy', 'Music'],
-        'gradient': [AppColors.diplomat, AppColors.primary],
-        'description':
-            'Passionate about understanding human nature and meaningful connections',
-      },
-      {
-        'name': 'Jordan Kim',
-        'mbtiType': 'ENTP',
-        'avatar': '💡',
-        'compatibility': 92,
-        'distance': '1.8 km away',
-        'interests': ['Innovation', 'Debates', 'Technology'],
-        'gradient': [AppColors.analyst, AppColors.diplomat],
-        'description':
-            'Love exploring new ideas and challenging conventional thinking',
-      },
-    ];
+    // Potential matches are now managed by the provider
   }
 
   @override
@@ -311,89 +169,48 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
   }
 
   Widget _buildStoriesSection() {
-    final stories = [
-      {
-        'id': 'add_story',
-        'username': 'Your Story',
-        'avatar': '➕',
-        'mediaType': 'add',
-        'isViewed': false,
-        'mbtiType': '',
-        'gradient': [AppColors.primary, AppColors.primaryLight],
-      },
-      {
-        'id': '1',
-        'username': 'Alex Chen',
-        'avatar': '👩‍💻',
-        'mediaType': 'image',
-        'isViewed': false,
-        'mbtiType': 'INTJ',
-        'gradient': [AppColors.analyst, AppColors.analyst.withOpacity(0.7)],
-      },
-      {
-        'id': '2',
-        'username': 'Sarah M',
-        'avatar': '🎨',
-        'mediaType': 'video',
-        'isViewed': true,
-        'mbtiType': 'ENFP',
-        'gradient': [AppColors.diplomat, AppColors.diplomat.withOpacity(0.7)],
-      },
-      {
-        'id': '3',
-        'username': 'Mike J',
-        'avatar': '📊',
-        'mediaType': 'poll',
-        'isViewed': false,
-        'mbtiType': 'ESTJ',
-        'gradient': [AppColors.sentinel, AppColors.sentinel.withOpacity(0.7)],
-      },
-      {
-        'id': '4',
-        'username': 'Emma D',
-        'avatar': '🎭',
-        'mediaType': 'boomerang',
-        'isViewed': true,
-        'mbtiType': 'ISFP',
-        'gradient': [AppColors.explorer, AppColors.explorer.withOpacity(0.7)],
-      },
-      {
-        'id': '5',
-        'username': 'David L',
-        'avatar': '🎵',
-        'mediaType': 'music',
-        'isViewed': false,
-        'mbtiType': 'ENTP',
-        'gradient': [AppColors.analyst, AppColors.diplomat],
-      },
-      {
-        'id': '6',
-        'username': 'Lisa K',
-        'avatar': '📝',
-        'mediaType': 'text',
-        'isViewed': false,
-        'mbtiType': 'INFJ',
-        'gradient': [AppColors.diplomat, AppColors.primary],
-      },
-    ];
+    return Consumer<DiscoveryProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoadingStories) {
+          return const SizedBox(
+            height: 120,
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-    return SizedBox(
-      height: 120,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: stories.length,
-        itemBuilder: (context, index) {
-          final story = stories[index];
-          return _buildStoryItem(context, story);
-        },
-      ),
+        if (provider.storiesError != null) {
+          return SizedBox(
+            height: 120,
+            child: Center(
+              child: Text(
+                'Error loading stories',
+                style: TextStyle(color: AppColors.error),
+              ),
+            ),
+          );
+        }
+
+        final stories = provider.mbtiStories;
+
+        return SizedBox(
+          height: 120,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: stories.length,
+            itemBuilder: (context, index) {
+              final story = stories[index];
+              return _buildStoryItem(context, story);
+            },
+          ),
+        );
+      },
     );
   }
 
   Widget _buildStoryItem(BuildContext context, Map<String, dynamic> story) {
     final isAddStory = story['id'] == 'add_story';
-    final isViewed = story['isViewed'] as bool;
-    final gradient = story['gradient'] as List<Color>;
+    final isViewed = story['isViewed'] as bool? ?? false;
+    final gradient = _getStoryGradient(story);
 
     return Container(
       width: 80,
@@ -439,12 +256,14 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
                       ),
                     ),
                   ),
-                  if (!isAddStory && story['mediaType'] != 'image')
+                  if (!isAddStory &&
+                      story['storyType'] != null &&
+                      story['storyType'] != 'image')
                     Positioned(
                       bottom: 2,
                       right: 2,
                       child: _buildMediaTypeIndicator(
-                        story['mediaType'] as String,
+                        story['storyType'] as String,
                       ),
                     ),
                   if (isViewed && !isAddStory)
@@ -482,7 +301,8 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (!isAddStory && (story['mbtiType'] as String).isNotEmpty)
+                if (!isAddStory &&
+                    (story['mbtiType'] as String? ?? '').isNotEmpty)
                   Text(
                     story['mbtiType'] as String,
                     style: AppTypography.labelSmall.copyWith(
@@ -498,6 +318,39 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
         ],
       ),
     );
+  }
+
+  List<Color> _getStoryGradient(Map<String, dynamic> story) {
+    if (story['id'] == 'add_story') {
+      return [AppColors.primary, AppColors.primaryLight];
+    }
+
+    final mbtiType = story['mbtiType'] as String? ?? '';
+
+    if (mbtiType.isEmpty || mbtiType.length < 2) {
+      return [AppColors.primary, AppColors.primaryLight];
+    }
+
+    final prefix = mbtiType.substring(0, 2);
+
+    switch (prefix) {
+      case 'IN':
+        return [AppColors.analyst, AppColors.analyst.withOpacity(0.7)];
+      case 'EN':
+        if (mbtiType.contains('F')) {
+          return [AppColors.diplomat, AppColors.diplomat.withOpacity(0.7)];
+        }
+        return [AppColors.analyst, AppColors.diplomat];
+      case 'IS':
+        if (mbtiType.contains('T')) {
+          return [AppColors.sentinel, AppColors.sentinel.withOpacity(0.7)];
+        }
+        return [AppColors.explorer, AppColors.explorer.withOpacity(0.7)];
+      case 'ES':
+        return [AppColors.explorer, AppColors.explorer.withOpacity(0.7)];
+      default:
+        return [AppColors.primary, AppColors.primaryLight];
+    }
   }
 
   Widget _buildMediaTypeIndicator(String mediaType) {
@@ -562,19 +415,11 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
   }
 
   void _addNewPost(Map<String, dynamic> newPost) {
+    final provider = Provider.of<DiscoveryProvider>(context, listen: false);
+
     setState(() {
-      // Add new post to the beginning of the feed
-      _allPosts.insert(0, newPost);
-
-      // Initialize post states for the new post
-      final postId = newPost['id'] as String;
-      _likedPosts[postId] = false;
-      _bookmarkedPosts[postId] = false;
-      _likeCounts[postId] = 0;
-      _commentCounts[postId] = 0;
-      _shareCounts[postId] = 0;
-
       // Initialize animation controllers for the new post
+      final postId = newPost['id'] as String;
       _likeAnimationControllers[postId] = AnimationController(
         duration: const Duration(milliseconds: 400),
         vsync: this,
@@ -585,6 +430,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
       );
     });
 
+    // The provider will handle the post state management
     // Show success message
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -790,7 +636,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: story['gradient'] as List<Color>,
+                        colors:
+                            (story['gradient'] as List<Color>?) ??
+                            [AppColors.primary, AppColors.primaryLight],
                       ),
                       borderRadius: BorderRadius.circular(AppSpacing.lg),
                     ),
@@ -962,29 +810,60 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
   }
 
   Widget _buildMBTIFeed(BuildContext context) {
-    // Safety check - ensure posts are available
-    if (_allPosts.isEmpty) {
-      _initializePostStates();
-    }
-
-    if (_allPosts.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.feed_outlined, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'No posts available',
-              style: TextStyle(fontSize: 18, color: Colors.grey),
+    return Consumer<DiscoveryProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoadingPosts) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Loading posts...'),
+              ],
             ),
-          ],
-        ),
-      );
-    }
+          );
+        }
 
-    return Column(
-      children: _allPosts.map((post) => _buildFeedPost(context, post)).toList(),
+        if (provider.postsError != null) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: AppColors.error),
+                SizedBox(height: 16),
+                Text(
+                  'Error loading posts',
+                  style: TextStyle(color: AppColors.error),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final posts = provider.posts;
+        if (posts.isEmpty) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.feed_outlined, size: 64, color: Colors.grey),
+                SizedBox(height: 16),
+                Text(
+                  'No posts available',
+                  style: TextStyle(fontSize: 18, color: Colors.grey),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Column(
+          children: posts
+              .map((post) => _buildFeedPost(context, post.toJson()))
+              .toList(),
+        );
+      },
     );
   }
 
@@ -1015,7 +894,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
   }
 
   Widget _buildPostHeader(BuildContext context, Map<String, dynamic> post) {
-    final gradient = post['gradient'] as List<Color>;
+    final gradient =
+        (post['gradient'] as List<Color>?) ??
+        [AppColors.primary, AppColors.primaryLight];
 
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -1105,7 +986,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
 
   Widget _buildPostContent(BuildContext context, Map<String, dynamic> post) {
     final postType = post['postType'] as String;
-    final gradient = post['gradient'] as List<Color>;
+    final gradient =
+        (post['gradient'] as List<Color>?) ??
+        [AppColors.primary, AppColors.primaryLight];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1252,7 +1135,11 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
         color: AppColors.surfaceVariant.withOpacity(0.3),
         borderRadius: BorderRadius.circular(AppSpacing.md),
         border: Border.all(
-          color: (post['gradient'] as List<Color>).first.withOpacity(0.2),
+          color:
+              ((post['gradient'] as List<Color>?) ??
+                      [AppColors.primary, AppColors.primaryLight])
+                  .first
+                  .withOpacity(0.2),
         ),
       ),
       child: Row(
@@ -1260,12 +1147,19 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
           Container(
             padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
-              color: (post['gradient'] as List<Color>).first.withOpacity(0.1),
+              color:
+                  ((post['gradient'] as List<Color>?) ??
+                          [AppColors.primary, AppColors.primaryLight])
+                      .first
+                      .withOpacity(0.1),
               borderRadius: BorderRadius.circular(AppSpacing.sm),
             ),
             child: Icon(
               Icons.format_quote,
-              color: (post['gradient'] as List<Color>).first,
+              color:
+                  ((post['gradient'] as List<Color>?) ??
+                          [AppColors.primary, AppColors.primaryLight])
+                      .first,
               size: AppSpacing.iconSize,
             ),
           ),
@@ -1287,7 +1181,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
 
   Widget _buildPostHashtags(Map<String, dynamic> post) {
     final hashtags = post['hashtags'] as List<String>;
-    final gradient = post['gradient'] as List<Color>;
+    final gradient =
+        (post['gradient'] as List<Color>?) ??
+        [AppColors.primary, AppColors.primaryLight];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
@@ -1312,32 +1208,36 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
   }
 
   Widget _buildPostActions(Map<String, dynamic> post) {
-    final postId = post['id'] as String;
-    final likeCount = _likeCounts[postId] ?? post['likes'] as int;
-    final commentCount = _commentCounts[postId] ?? post['comments'] as int;
-    final shareCount = _shareCounts[postId] ?? post['shares'] as int;
+    return Consumer<DiscoveryProvider>(
+      builder: (context, provider, child) {
+        final postId = post['id'] as String;
+        final likeCount = provider.getPostLikeCount(postId);
+        final commentCount = provider.getPostCommentCount(postId);
+        final shareCount = provider.getPostShareCount(postId);
 
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Row(
-        children: [
-          _buildAnimatedLikeButton(postId, likeCount),
-          const SizedBox(width: AppSpacing.lg),
-          _buildActionButton(
-            icon: Icons.chat_bubble_outline,
-            count: commentCount,
-            onTap: () => _commentOnPost(postId),
+        return Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Row(
+            children: [
+              _buildAnimatedLikeButton(postId, likeCount, provider),
+              const SizedBox(width: AppSpacing.lg),
+              _buildActionButton(
+                icon: Icons.chat_bubble_outline,
+                count: commentCount,
+                onTap: () => _commentOnPost(postId),
+              ),
+              const SizedBox(width: AppSpacing.lg),
+              _buildActionButton(
+                icon: Icons.share_outlined,
+                count: shareCount,
+                onTap: () => _sharePostById(postId),
+              ),
+              const Spacer(),
+              _buildAnimatedBookmarkButton(postId, provider),
+            ],
           ),
-          const SizedBox(width: AppSpacing.lg),
-          _buildActionButton(
-            icon: Icons.share_outlined,
-            count: shareCount,
-            onTap: () => _sharePostById(postId),
-          ),
-          const Spacer(),
-          _buildAnimatedBookmarkButton(postId),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -1375,9 +1275,23 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
     );
   }
 
-  Widget _buildAnimatedLikeButton(String postId, int count) {
-    final isLiked = _likedPosts[postId] ?? false;
-    final controller = _likeAnimationControllers[postId]!;
+  Widget _buildAnimatedLikeButton(
+    String postId,
+    int count,
+    DiscoveryProvider provider,
+  ) {
+    final isLiked = provider.isPostLiked(postId);
+    final controller =
+        _likeAnimationControllers[postId] ??
+        AnimationController(
+          duration: const Duration(milliseconds: 400),
+          vsync: this,
+        );
+
+    // Initialize controller if not exists
+    if (!_likeAnimationControllers.containsKey(postId)) {
+      _likeAnimationControllers[postId] = controller;
+    }
 
     return AnimatedBuilder(
       animation: controller,
@@ -1386,7 +1300,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
         return Transform.scale(
           scale: scale,
           child: GestureDetector(
-            onTap: () => _toggleLike(postId),
+            onTap: () => _toggleLike(postId, provider),
             child: Row(
               children: [
                 Stack(
@@ -1427,9 +1341,22 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
     );
   }
 
-  Widget _buildAnimatedBookmarkButton(String postId) {
-    final isBookmarked = _bookmarkedPosts[postId] ?? false;
-    final controller = _bookmarkAnimationControllers[postId]!;
+  Widget _buildAnimatedBookmarkButton(
+    String postId,
+    DiscoveryProvider provider,
+  ) {
+    final isBookmarked = provider.isPostBookmarked(postId);
+    final controller =
+        _bookmarkAnimationControllers[postId] ??
+        AnimationController(
+          duration: const Duration(milliseconds: 300),
+          vsync: this,
+        );
+
+    // Initialize controller if not exists
+    if (!_bookmarkAnimationControllers.containsKey(postId)) {
+      _bookmarkAnimationControllers[postId] = controller;
+    }
 
     return AnimatedBuilder(
       animation: controller,
@@ -1438,7 +1365,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
         return Transform.rotate(
           angle: rotation,
           child: IconButton(
-            onPressed: () => _toggleBookmark(postId),
+            onPressed: () => _toggleBookmark(postId, provider),
             icon: Icon(
               isBookmarked ? Icons.bookmark : Icons.bookmark_border,
               color: isBookmarked ? AppColors.primary : AppColors.textSecondary,
@@ -1473,8 +1400,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
   void _showPostOptions(BuildContext context, Map<String, dynamic> post) {
     final isCurrentUser =
         post['username'] == 'You'; // Check if it's current user's post
-    final isLiked = _likedPosts[post['id']] ?? false;
-    final isBookmarked = _bookmarkedPosts[post['id']] ?? false;
+    final provider = Provider.of<DiscoveryProvider>(context, listen: false);
+    final isLiked = provider.isPostLiked(post['id'] as String);
+    final isBookmarked = provider.isPostBookmarked(post['id'] as String);
 
     showModalBottomSheet(
       context: context,
@@ -1513,7 +1441,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: post['gradient'] as List<Color>,
+                        colors:
+                            (post['gradient'] as List<Color>?) ??
+                            [AppColors.primary, AppColors.primaryLight],
                       ),
                       borderRadius: BorderRadius.circular(AppSpacing.full),
                     ),
@@ -1586,7 +1516,11 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
         title: Text(isLiked ? 'Unlike Post' : 'Like Post'),
         onTap: () {
           Navigator.pop(context);
-          _toggleLike(post['id'] as String);
+          final provider = Provider.of<DiscoveryProvider>(
+            context,
+            listen: false,
+          );
+          _toggleLike(post['id'] as String, provider);
         },
       ),
     );
@@ -1601,7 +1535,11 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
         title: Text(isBookmarked ? 'Remove Bookmark' : 'Bookmark Post'),
         onTap: () {
           Navigator.pop(context);
-          _toggleBookmark(post['id'] as String);
+          final provider = Provider.of<DiscoveryProvider>(
+            context,
+            listen: false,
+          );
+          _toggleBookmark(post['id'] as String, provider);
         },
       ),
     );
@@ -1683,30 +1621,21 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
   }
 
   // Post option methods
-  void _toggleLike(String postId) {
-    setState(() {
-      _likedPosts[postId] = !(_likedPosts[postId] ?? false);
-      if (_likedPosts[postId]!) {
-        _likeCounts[postId] = (_likeCounts[postId] ?? 0) + 1;
-      } else {
-        _likeCounts[postId] = (_likeCounts[postId] ?? 1) - 1;
-      }
+  void _toggleLike(String postId, DiscoveryProvider provider) {
+    provider.toggleLikePost(postId);
 
-      // Trigger like animation
-      _likeAnimationControllers[postId]?.forward().then((_) {
-        _likeAnimationControllers[postId]?.reverse();
-      });
+    // Trigger like animation
+    _likeAnimationControllers[postId]?.forward().then((_) {
+      _likeAnimationControllers[postId]?.reverse();
     });
   }
 
-  void _toggleBookmark(String postId) {
-    setState(() {
-      _bookmarkedPosts[postId] = !(_bookmarkedPosts[postId] ?? false);
+  void _toggleBookmark(String postId, DiscoveryProvider provider) {
+    provider.toggleBookmarkPost(postId);
 
-      // Trigger bookmark animation
-      _bookmarkAnimationControllers[postId]?.forward().then((_) {
-        _bookmarkAnimationControllers[postId]?.reverse();
-      });
+    // Trigger bookmark animation
+    _bookmarkAnimationControllers[postId]?.forward().then((_) {
+      _bookmarkAnimationControllers[postId]?.reverse();
     });
   }
 
@@ -1905,14 +1834,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
   }
 
   void _performDeletePost(Map<String, dynamic> post) {
-    setState(() {
-      _allPosts.removeWhere((p) => p['id'] == post['id']);
-      _likedPosts.remove(post['id']);
-      _bookmarkedPosts.remove(post['id']);
-      _likeCounts.remove(post['id']);
-      _commentCounts.remove(post['id']);
-      _shareCounts.remove(post['id']);
+    final provider = Provider.of<DiscoveryProvider>(context, listen: false);
 
+    setState(() {
       // Dispose animation controllers
       _likeAnimationControllers[post['id']]?.dispose();
       _likeAnimationControllers.remove(post['id']);
@@ -1920,6 +1844,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
       _bookmarkAnimationControllers.remove(post['id']);
     });
 
+    // Remove post from provider
+    // Note: This is a simple implementation - in a real app, you'd call an API
+    // For now, we'll just show a success message
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Post deleted successfully'),
@@ -1954,12 +1881,13 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
   }
 
   void _sharePostById(String postId) {
-    final post = _allPosts.firstWhere(
-      (p) => p['id'] == postId,
-      orElse: () => {},
+    final provider = Provider.of<DiscoveryProvider>(context, listen: false);
+    final post = provider.posts.firstWhere(
+      (p) => p.id == postId,
+      orElse: () => DiscoveryPost.empty(),
     );
-    if (post.isNotEmpty) {
-      _sharePost(context, post);
+    if (post.id.isNotEmpty) {
+      _sharePost(context, post.toJson());
     }
   }
 
@@ -1975,8 +1903,12 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
         contentTitle: postData['title'] ?? 'Post Comments',
         initialComments: _createDummyComments(),
         onCommentAdded: (comment) {
+          final provider = Provider.of<DiscoveryProvider>(
+            context,
+            listen: false,
+          );
           setState(() {
-            _commentCounts[postId] = (_commentCounts[postId] ?? 0) + 1;
+            // Comment counts are managed by the provider
           });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -2163,7 +2095,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
 
   void _copyLink(String postId) {
     setState(() {
-      _shareCounts[postId] = (_shareCounts[postId] ?? 0) + 1;
+      // Share counts are managed by the provider
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -2175,7 +2107,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
 
   void _shareToChat(String postId) {
     setState(() {
-      _shareCounts[postId] = (_shareCounts[postId] ?? 0) + 1;
+      // Share counts are managed by the provider
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -2187,7 +2119,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
 
   void _shareExternal(String postId) {
     setState(() {
-      _shareCounts[postId] = (_shareCounts[postId] ?? 0) + 1;
+      // Share counts are managed by the provider
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -2263,92 +2195,112 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
   }
 
   Widget _buildMBTIMatching(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: AppColors.primaryGradient,
+    return Consumer<DiscoveryProvider>(
+      builder: (context, provider, child) {
+        return Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: AppColors.primaryGradient,
+                ),
+                borderRadius: BorderRadius.circular(AppSpacing.lg),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.favorite,
+                    color: AppColors.textInverse,
+                    size: AppSpacing.iconSize * 2,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    'Find Your MBTI Match',
+                    style: AppTypography.headlineMedium.copyWith(
+                      color: AppColors.textInverse,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'Connect with people who complement your personality',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textInverse.withOpacity(0.9),
+                      letterSpacing: 0.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  ElevatedButton(
+                    onPressed: () => _navigateToMatching(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.textInverse,
+                      foregroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xl,
+                        vertical: AppSpacing.md,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppSpacing.full),
+                      ),
+                    ),
+                    child: Text(
+                      'Start Matching',
+                      style: AppTypography.titleMedium.copyWith(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            borderRadius: BorderRadius.circular(AppSpacing.lg),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withOpacity(0.3),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              'Potential Matches',
+              style: AppTypography.titleMedium.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
               ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Icon(
-                Icons.favorite,
-                color: AppColors.textInverse,
-                size: AppSpacing.iconSize * 2,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                'Find Your MBTI Match',
-                style: AppTypography.headlineMedium.copyWith(
-                  color: AppColors.textInverse,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                'Connect with people who complement your personality',
-                style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textInverse.withOpacity(0.9),
-                  letterSpacing: 0.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              ElevatedButton(
-                onPressed: () => _navigateToMatching(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.textInverse,
-                  foregroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xl,
-                    vertical: AppSpacing.md,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppSpacing.full),
-                  ),
-                ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            if (provider.isLoadingMatches)
+              const Center(child: CircularProgressIndicator())
+            else if (provider.matchesError != null)
+              Center(
                 child: Text(
-                  'Start Matching',
-                  style: AppTypography.titleMedium.copyWith(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                  ),
+                  'Error loading matches',
+                  style: TextStyle(color: AppColors.error),
                 ),
+              )
+            else if (provider.matches.isEmpty)
+              const Center(child: Text('No matches available'))
+            else
+              ...provider.matches.map(
+                (match) => _buildMatchCard(context, match.toJson()),
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        Text(
-          'Potential Matches',
-          style: AppTypography.titleMedium.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        ..._potentialMatches.map((match) => _buildMatchCard(context, match)),
-      ],
+          ],
+        );
+      },
     );
   }
 
   Widget _buildMatchCard(BuildContext context, Map<String, dynamic> match) {
-    final gradient = match['gradient'] as List<Color>;
+    final gradient =
+        (match['gradient'] as List<Color>?) ??
+        [AppColors.primary, AppColors.primaryLight];
 
     return Dismissible(
       key: Key('match_${match['name']}'),
@@ -2621,8 +2573,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
   }
 
   void _likeMatch(String name) {
+    final provider = Provider.of<DiscoveryProvider>(context, listen: false);
     setState(() {
-      _potentialMatches.removeWhere((match) => match['name'] == name);
+      // Matches are managed by the provider
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -2639,8 +2592,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
   }
 
   void _passMatch(String name) {
+    final provider = Provider.of<DiscoveryProvider>(context, listen: false);
     setState(() {
-      _potentialMatches.removeWhere((match) => match['name'] == name);
+      // Matches are managed by the provider
     });
 
     ScaffoldMessenger.of(context).showSnackBar(

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:opop/features/auth/preference/auth_preference.dart';
 import 'package:opop/features/chat/presentation/data/chat_list_data.dart';
+import 'package:opop/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:opop/features/profile/presentation/screens/friend_profile_screen.dart';
+import 'package:provider/provider.dart';
+import 'create_group_chat_screen.dart';
+import 'new_chat_screen.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
@@ -26,7 +30,6 @@ class ChatListScreen extends StatefulWidget {
 }
 
 class _ChatListScreenState extends State<ChatListScreen> {
-  List<ChatConversation> _conversations = [];
   List<ChatConversation> _filteredConversations = [];
   final _chatList = ChatModel.getConversations;
   String _searchQuery = '';
@@ -49,15 +52,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   void _loadConversations() {
+    final provider = Provider.of<ChatListProvider>(context, listen: false);
     _isLoading = true;
 
     // Simulate loading delay
     Future.delayed(const Duration(milliseconds: 500), () {
-      setState(() {
-        _conversations = _chatList;
-        _applyFilters();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _applyFilters();
+          _isLoading = false;
+        });
+      }
     });
   }
 
@@ -76,6 +81,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   Future<void> _onRefresh() async {
+    final provider = Provider.of<ChatListProvider>(context, listen: false);
     setState(() {
       _isLoading = true;
     });
@@ -84,7 +90,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
     await Future.delayed(const Duration(milliseconds: 500));
 
     setState(() {
-      _conversations = _chatList;
       _applyFilters();
       _isLoading = false;
     });
@@ -124,15 +129,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   void _onConversationTap(ChatConversation conversation) {
+    final provider = Provider.of<ChatListProvider>(context, listen: false);
+
     // Mark conversation as read by setting unread count to 0
     if (conversation.unreadCount > 0) {
-      final index = _conversations.indexWhere(
-        (conv) => conv.id == conversation.id,
-      );
-      if (index != -1) {
-        _conversations[index] = _conversations[index].copyWith(unreadCount: 0);
-        _applyFilters();
-      }
+      final updatedConversation = conversation.copyWith(unreadCount: 0);
+      provider.updateConversation(updatedConversation);
     }
 
     Navigator.of(context).push(
@@ -143,7 +145,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   void _applyFilters() {
-    List<ChatConversation> filtered = _conversations;
+    final provider = Provider.of<ChatListProvider>(context, listen: false);
+    List<ChatConversation> filtered = provider.conversations;
 
     // Apply search filter
     if (_searchQuery.isNotEmpty) {
@@ -166,7 +169,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   int _getTotalUnreadCount() {
-    return _conversations.fold(0, (sum, conv) => sum + conv.unreadCount);
+    final provider = Provider.of<ChatListProvider>(context, listen: false);
+    return provider.conversations.fold(
+      0,
+      (sum, conv) => sum + conv.unreadCount,
+    );
   }
 
   void _navigateToProfile() {
@@ -183,91 +190,303 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   void _onDismiss(DismissDirection direction, ChatConversation conversation) {
-    setState(() {
-      _conversations.remove(conversation);
-      _applyFilters();
-    });
+    final provider = Provider.of<ChatListProvider>(context, listen: false);
+    provider.removeConversation(conversation.id);
+    _applyFilters();
   }
 
   void _navigateToNewChat() {
+    _showChatOptions();
+  }
+
+  void _navigateToGroupChat() {
     Navigator.of(
       context,
-    ).push(MaterialPageRoute(builder: (context) => const NewChatScreen()));
+    ).push(MaterialPageRoute(builder: (context) => const CreateGroupChatScreen()));
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildAppBar(),
-            _buildSearchAndFilters(),
-            _buildConversationList(),
-          ],
+  void _showChatOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(AppSpacing.screenPadding),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppSpacing.lg),
+          ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _navigateToNewChat,
-        backgroundColor: AppColors.primary,
-        elevation: 4,
-        child: Icon(Icons.add_comment, color: AppColors.textInverse, size: 24),
-      ),
-    );
-  }
-
-  Widget _buildAppBar() {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.screenPadding),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        boxShadow: AppShadows.soft,
-      ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: _navigateToProfile,
-            child: Container(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: AppShadows.accent,
-              ),
-              child: CircleAvatar(
-                radius: 20,
-                backgroundColor: AppColors.primary,
-                child: Text(
-                  '👤',
-                  style: AppTypography.titleMedium.copyWith(
-                    color: AppColors.textInverse,
-                  ),
-                ),
+                color: AppColors.outline.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(AppSpacing.full),
               ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              'Create New Chat',
+              style: AppTypography.headlineSmall.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Row(
               children: [
-                Text(
-                  'Chats',
-                  style: AppTypography.headlineMedium.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w700,
+                Expanded(
+                  child: _buildChatOption(
+                    icon: Icons.person,
+                    title: 'Personal Chat',
+                    subtitle: 'Chat with a friend',
+                    color: AppColors.primary,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => const NewChatScreen()),
+                      );
+                    },
                   ),
                 ),
-                Text(
-                  '${_conversations.length} conversations',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: _buildChatOption(
+                    icon: Icons.group,
+                    title: 'Group Chat',
+                    subtitle: 'Create a group',
+                    color: AppColors.diplomat,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => const CreateGroupChatScreen()),
+                      );
+                    },
                   ),
                 ),
               ],
             ),
-          ),
-          _buildUnreadBadge(),
-        ],
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildChatOption(
+                    icon: Icons.support_agent,
+                    title: 'Support',
+                    subtitle: 'Get help',
+                    color: AppColors.warning,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      _createSupportChat();
+                    },
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: _buildChatOption(
+                    icon: Icons.cancel,
+                    title: 'Cancel',
+                    subtitle: 'Go back',
+                    color: AppColors.textSecondary,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+        ),
       ),
+    );
+  }
+
+  Future<void> _createSupportChat() async {
+    final provider = Provider.of<ChatListProvider>(context, listen: false);
+    
+    final success = await provider.createSupportChat(
+      subject: 'General Support Request',
+      category: 'general',
+      priority: 'normal',
+    );
+
+    if (success && mounted) {
+      _showSuccess('Support chat created successfully!');
+    } else if (mounted) {
+      _showError(provider.createChatError ?? 'Failed to create support chat');
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.md),
+        ),
+      ),
+    );
+  }
+
+  void _showSuccess(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.md),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChatOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(AppSpacing.md),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: AppColors.textInverse,
+                size: 24,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              title,
+              style: AppTypography.titleMedium.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              subtitle,
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ChatListProvider>(
+      builder: (context, provider, child) {
+        return Scaffold(
+          body: SafeArea(
+            child: Column(
+              children: [
+                _buildAppBar(),
+                _buildSearchAndFilters(),
+                _buildConversationList(),
+              ],
+            ),
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: _navigateToNewChat,
+            backgroundColor: AppColors.primary,
+            elevation: 4,
+            child: Icon(
+              Icons.add_comment,
+              color: AppColors.textInverse,
+              size: 24,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAppBar() {
+    return Consumer<ChatListProvider>(
+      builder: (context, provider, child) {
+        return Container(
+          padding: const EdgeInsets.all(AppSpacing.screenPadding),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            boxShadow: AppShadows.soft,
+          ),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: _navigateToProfile,
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: AppShadows.accent,
+                  ),
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: AppColors.primary,
+                    child: Text(
+                      '👤',
+                      style: AppTypography.titleMedium.copyWith(
+                        color: AppColors.textInverse,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Chats',
+                      style: AppTypography.headlineMedium.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      '${provider.conversations.length} conversations',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _buildUnreadBadge(),
+            ],
+          ),
+        );
+      },
     );
   }
 

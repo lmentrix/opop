@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:opop/core/constants/app_colors.dart';
 import 'package:opop/core/constants/app_spacing.dart';
 import 'package:opop/core/constants/app_typography.dart';
+import 'package:opop/features/discovery/data/models/post_creation_data.dart';
 import 'package:opop/features/discovery/data/services/media_service.dart';
 
 class PostCreationScreen extends StatefulWidget {
@@ -19,41 +20,15 @@ class _PostCreationScreenState extends State<PostCreationScreen> {
   final TextEditingController _hashtagsController = TextEditingController();
 
   File? _selectedMedia;
-  String _postType = 'text'; // text, image, video
+  String _postType = PostCreationData.defaultPostType;
   bool _isLoading = false;
 
-  final List<String> _mbtiTypes = [
-    'INTJ',
-    'INTP',
-    'ENTJ',
-    'ENTP',
-    'INFJ',
-    'INFP',
-    'ENFJ',
-    'ENFP',
-    'ISTJ',
-    'ISFJ',
-    'ESTJ',
-    'ESFJ',
-    'ISTP',
-    'ISFP',
-    'ESTP',
-    'ESFP',
-  ];
+  final List<String> _mbtiTypes = PostCreationData.mbtiTypes;
 
-  String _selectedMBTI = 'INTJ';
-  String _selectedMood = 'thoughtful';
+  String _selectedMBTI = PostCreationData.defaultMBTIType;
+  String _selectedMood = PostCreationData.defaultMood;
 
-  final List<String> _moods = [
-    'thoughtful',
-    'excited',
-    'curious',
-    'inspired',
-    'grateful',
-    'motivated',
-    'reflective',
-    'creative',
-  ];
+  final List<String> _moods = PostCreationData.moods;
 
   @override
   void dispose() {
