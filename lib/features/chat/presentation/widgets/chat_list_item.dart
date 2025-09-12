@@ -11,12 +11,18 @@ class ChatListItem extends StatefulWidget {
   final ChatConversation conversation;
   final VoidCallback onTap;
   final VoidCallback? onAvatarTap;
+  final DismissDirectionCallback? onDismiss;
+  final VoidCallback? onLongPress;
+  final DismissDirection direction;
 
   const ChatListItem({
     super.key,
     required this.conversation,
     required this.onTap,
+    required this.direction,
     this.onAvatarTap,
+    this.onDismiss,
+    this.onLongPress,
   });
 
   @override
@@ -117,43 +123,49 @@ class _ChatListItemState extends State<ChatListItem>
                         )
                         .toList(),
             ),
-            child: Card(
-              elevation: 0,
-              margin: EdgeInsets.zero,
-              shadowColor: Colors.transparent,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSpacing.md),
-              ),
-              child: Material(
-                color: _isPressed
-                    ? AppColors.pressed
-                    : Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(AppSpacing.md),
-                child: InkWell(
-                  onTap: () {
-                    // Only execute if not already executed through gesture
-                    if (!_hasExecutedTap) {
-                      _hasExecutedTap = true;
-                      widget.onTap();
-                    }
-                  },
+            child: Dismissible(
+              key: Key(widget.conversation.id),
+              direction: widget.direction,
+              onDismissed: widget.onDismiss,
+              child: Card(
+                elevation: 0,
+                margin: EdgeInsets.zero,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppSpacing.md),
-                  splashColor: AppColors.primary.withOpacity(0.1),
-                  highlightColor: AppColors.primary.withOpacity(0.05),
-                  child: GestureDetector(
-                    onTapDown: _handleTapDown,
-                    onTapUp: _handleTapUp,
-                    onTapCancel: _handleTapCancel,
-                    behavior: HitTestBehavior.opaque,
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppSpacing.md),
-                      child: Row(
-                        children: [
-                          _buildAvatar(),
-                          const SizedBox(width: AppSpacing.md),
-                          Expanded(child: _buildContent()),
-                          _buildTrailingInfo(),
-                        ],
+                ),
+                child: Material(
+                  color: _isPressed
+                      ? AppColors.pressed
+                      : Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(AppSpacing.md),
+                  child: InkWell(
+                    onTap: () {
+                      // Only execute if not already executed through gesture
+                      if (!_hasExecutedTap) {
+                        _hasExecutedTap = true;
+                        widget.onTap();
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(AppSpacing.md),
+                    splashColor: AppColors.primary.withOpacity(0.1),
+                    highlightColor: AppColors.primary.withOpacity(0.05),
+                    child: GestureDetector(
+                      onTapDown: _handleTapDown,
+                      onTapUp: _handleTapUp,
+                      onTapCancel: _handleTapCancel,
+                      onLongPress: widget.onLongPress,
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        child: Row(
+                          children: [
+                            _buildAvatar(),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(child: _buildContent()),
+                            _buildTrailingInfo(),
+                          ],
+                        ),
                       ),
                     ),
                   ),

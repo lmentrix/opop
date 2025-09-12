@@ -32,6 +32,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   String _searchQuery = '';
   ConversationType? _selectedFilter;
   bool _isLoading = false;
+  bool _isDeleted = false;
 
   @override
   void initState() {
@@ -179,6 +180,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => const FriendProfileScreen()),
     );
+  }
+
+  void _onDismiss(DismissDirection direction, ChatConversation conversation) {
+    setState(() {
+      _conversations.remove(conversation);
+      _applyFilters();
+    });
   }
 
   void _navigateToNewChat() {
@@ -387,6 +395,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
               conversation: conversation,
               onTap: () => _onConversationTap(conversation),
               onAvatarTap: () => _onAvatarTap(),
+              direction: DismissDirection.horizontal,
+              onDismiss: (direction) => _onDismiss(direction, conversation),
             ),
           );
         },

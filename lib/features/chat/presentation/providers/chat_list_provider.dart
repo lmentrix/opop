@@ -30,4 +30,9 @@ class ChatListProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void clearConversations() {
+    _conversations.clear();
+    notifyListeners();
+  }
 }
