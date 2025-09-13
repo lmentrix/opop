@@ -257,7 +257,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
                     ),
                   ),
                   if (!isAddStory &&
-                      story['storyType'] != null &&
+                      story['storyType'].isNotEmpty &&
                       story['storyType'] != 'image')
                     Positioned(
                       bottom: 2,
@@ -409,7 +409,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
       MaterialPageRoute(builder: (context) => const PostCreationScreen()),
     );
 
-    if (result != null) {
+    if (result.isNotEmpty) {
       _addNewPost(result as Map<String, dynamic>);
     }
   }
@@ -618,6 +618,16 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
   }
 
   void _showStoryViewer(BuildContext context, Map<String, dynamic> story) {
+    // Check if story still exists before showing
+    checkisDeleted(story);
+
+    // Get fresh story data from provider
+    final provider = Provider.of<DiscoveryProvider>(context, listen: false);
+    final freshStory = provider.mbtiStories.firstWhere(
+      (s) => s['id'] == story['id'],
+      orElse: () => story,
+    );
+
     showDialog(
       context: context,
       barrierColor: Colors.black87,
@@ -637,7 +647,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors:
-                            (story['gradient'] as List<Color>?) ??
+                            (freshStory['gradient'] as List<Color>?) ??
                             [AppColors.primary, AppColors.primaryLight],
                       ),
                       borderRadius: BorderRadius.circular(AppSpacing.lg),
@@ -646,7 +656,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          story['avatar'] as String,
+                          freshStory['avatar'] as String,
                           style: AppTypography.displayLarge.copyWith(
                             fontSize: 80,
                             color: AppColors.textInverse,
@@ -654,7 +664,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
                         ),
                         const SizedBox(height: AppSpacing.lg),
                         Text(
-                          '${story['mbtiType']} Story',
+                          '${freshStory['mbtiType']} Story',
                           style: AppTypography.headlineMedium.copyWith(
                             color: AppColors.textInverse,
                             fontWeight: FontWeight.w800,
@@ -674,7 +684,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
                             ),
                           ),
                           child: Text(
-                            _getStoryContent(story['mediaType'] as String),
+                            _getStoryContent(
+                              freshStory['storyType']?.toString() ?? 'image',
+                            ),
                             style: AppTypography.bodyMedium.copyWith(
                               color: AppColors.textInverse,
                               fontWeight: FontWeight.w500,
@@ -699,7 +711,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
                     radius: 20,
                     backgroundColor: AppColors.textInverse,
                     child: Text(
-                      story['avatar'] as String,
+                      freshStory['avatar'] as String,
                       style: AppTypography.titleMedium.copyWith(fontSize: 20),
                     ),
                   ),
@@ -709,7 +721,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          story['username'] as String,
+                          freshStory['username'] as String,
                           style: AppTypography.titleMedium.copyWith(
                             color: AppColors.textInverse,
                             fontWeight: FontWeight.w700,
@@ -717,7 +729,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
                           ),
                         ),
                         Text(
-                          '${story['mbtiType']} • 2h ago',
+                          '${freshStory['mbtiType']} • ${freshStory['timeAgo']}',
                           style: AppTypography.bodySmall.copyWith(
                             color: AppColors.textInverse.withOpacity(0.8),
                             letterSpacing: 0.3,
@@ -782,6 +794,16 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
                       size: 28,
                     ),
                   ),
+                  // Add delete button for user's own stories
+                  if (freshStory['username'] == 'You')
+                    IconButton(
+                      onPressed: () => _deleteStory(freshStory),
+                      icon: const Icon(
+                        Icons.delete,
+                        color: AppColors.error,
+                        size: 28,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -842,6 +864,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
         }
 
         final posts = provider.posts;
+
         if (posts.isEmpty) {
           return const Center(
             child: Column(
@@ -1594,19 +1617,18 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
       );
     }
 
-    // Delete post (only for current user's posts)
-    if (isCurrentUser) {
-      options.add(
-        ListTile(
-          leading: Icon(Icons.delete, color: AppColors.error),
-          title: Text('Delete Post', style: TextStyle(color: AppColors.error)),
-          onTap: () {
-            Navigator.pop(context);
-            _deletePost(context, post);
-          },
-        ),
-      );
-    }
+    // TODO: delete only current user
+
+    options.add(
+      ListTile(
+        leading: Icon(Icons.delete, color: AppColors.error),
+        title: Text('Delete Post', style: TextStyle(color: AppColors.error)),
+        onTap: () {
+          Navigator.pop(context);
+          _deletePost(context, post);
+        },
+      ),
+    );
 
     // Cancel option
     options.add(
@@ -1835,18 +1857,20 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
 
   void _performDeletePost(Map<String, dynamic> post) {
     final provider = Provider.of<DiscoveryProvider>(context, listen: false);
+    final postId = post['id'] as String;
 
+    // Delete the post
+    provider.deletePost(postId);
+
+    // Clean up animation controllers
     setState(() {
-      // Dispose animation controllers
-      _likeAnimationControllers[post['id']]?.dispose();
-      _likeAnimationControllers.remove(post['id']);
-      _bookmarkAnimationControllers[post['id']]?.dispose();
-      _bookmarkAnimationControllers.remove(post['id']);
+      _likeAnimationControllers[postId]?.dispose();
+      _likeAnimationControllers.remove(postId);
+      _bookmarkAnimationControllers[postId]?.dispose();
+      _bookmarkAnimationControllers.remove(postId);
     });
 
-    // Remove post from provider
-    // Note: This is a simple implementation - in a real app, you'd call an API
-    // For now, we'll just show a success message
+    // Show success message
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Post deleted successfully'),
@@ -2606,6 +2630,121 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.md),
         ),
+      ),
+    );
+  }
+
+  void checkisDeleted(Map<String, dynamic> story) {
+    final provider = Provider.of<DiscoveryProvider>(context, listen: false);
+    final storyId = story['id'] as String;
+
+    // Check if the story still exists using the provider's method
+    final storyExists = provider.storyExists(storyId);
+
+    if (!storyExists) {
+      // Show empty state if story is deleted
+      _showEmptyStoryState();
+    }
+  }
+
+  void _showEmptyStoryState() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => Dialog.fullscreen(
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.delete_outline,
+                    color: AppColors.textSecondary,
+                    size: 80,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(
+                    'Story Deleted',
+                    style: AppTypography.headlineMedium.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    'This story has been removed by the user.',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.3,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              top: 50,
+              right: 20,
+              child: IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(
+                  Icons.close,
+                  color: AppColors.textPrimary,
+                  size: 28,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _deleteStory(Map<String, dynamic> story) {
+    // Show confirmation dialog
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Story'),
+        content: Text(
+          'Are you sure you want to delete your story? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _performDeleteStory(story);
+            },
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _performDeleteStory(Map<String, dynamic> story) {
+    final provider = Provider.of<DiscoveryProvider>(context, listen: false);
+    final storyId = story['id'] as String;
+
+    // Delete the story
+    provider.deleteStory(storyId);
+
+    // Close the story viewer and return to discovery screen
+    Navigator.pop(context);
+
+    // Show success message
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Story deleted successfully'),
+        backgroundColor: AppColors.success,
       ),
     );
   }

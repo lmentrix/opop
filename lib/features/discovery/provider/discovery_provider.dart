@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:opop/core/constants/app_colors.dart';
 import 'package:opop/features/discovery/data/models/discovery_data.dart';
 import 'package:opop/features/discovery/data/models/music_data.dart';
 import 'package:opop/features/discovery/data/models/text_story_data.dart';
@@ -347,6 +348,9 @@ class DiscoveryProvider extends ChangeNotifier {
         _mbtiStories.insert(0, newStory);
       }
 
+      // Also add as post to the MBTI feed
+      _addStoryAsPost(newStory);
+
       _lastCreatedStory = newStory;
       _isCreatingStory = false;
       notifyListeners();
@@ -407,6 +411,9 @@ class DiscoveryProvider extends ChangeNotifier {
         _mbtiStories.insert(0, newStory);
       }
 
+      // Also add as post to the MBTI feed
+      _addStoryAsPost(newStory);
+
       _lastCreatedStory = newStory;
       _isCreatingStory = false;
       notifyListeners();
@@ -460,6 +467,9 @@ class DiscoveryProvider extends ChangeNotifier {
         _mbtiStories.insert(0, newStory);
       }
 
+      // Also add as post to the MBTI feed
+      _addStoryAsPost(newStory);
+
       _lastCreatedStory = newStory;
       _isCreatingStory = false;
       notifyListeners();
@@ -509,5 +519,123 @@ class DiscoveryProvider extends ChangeNotifier {
               story['storyType'] == storyType && story['id'] != 'add_story',
         )
         .toList();
+  }
+
+  // Helper method to get gradient colors from MBTI type
+  List<Color> _getGradientFromMBTIType(String mbtiType) {
+    if (mbtiType.isEmpty || mbtiType.length < 2) {
+      return [AppColors.primary, AppColors.primaryLight];
+    }
+
+    final prefix = mbtiType.substring(0, 2);
+
+    switch (prefix) {
+      case 'IN':
+        return [AppColors.analyst, AppColors.analyst.withOpacity(0.7)];
+      case 'EN':
+        if (mbtiType.contains('F')) {
+          return [AppColors.diplomat, AppColors.diplomat.withOpacity(0.7)];
+        }
+        return [AppColors.analyst, AppColors.diplomat];
+      case 'IS':
+        if (mbtiType.contains('T')) {
+          return [AppColors.sentinel, AppColors.sentinel.withOpacity(0.7)];
+        }
+        return [AppColors.explorer, AppColors.explorer.withOpacity(0.7)];
+      case 'ES':
+        return [AppColors.explorer, AppColors.explorer.withOpacity(0.7)];
+      default:
+        return [AppColors.primary, AppColors.primaryLight];
+    }
+  }
+
+  // Convert story to post and add to posts list
+  void _addStoryAsPost(Map<String, dynamic> story) {
+    final gradient = _getGradientFromMBTIType(story['mbtiType'] ?? 'INTJ');
+
+    // Generate hashtags based on story content
+    final hashtags = <String>[];
+    final mbtiType = story['mbtiType'] as String? ?? '';
+    if (mbtiType.isNotEmpty) {
+      hashtags.add('#$mbtiType');
+    }
+    hashtags.add('#Story');
+
+    final storyType = story['storyType'] as String? ?? 'text';
+    if (storyType == 'poll') {
+      hashtags.add('#Poll');
+    } else if (storyType == 'music') {
+      hashtags.add('#Music');
+    } else if (storyType == 'image') {
+      hashtags.add('#Image');
+    } else if (storyType == 'video') {
+      hashtags.add('#Video');
+    }
+
+    // Create post from story
+    final newPost = DiscoveryPost(
+      id: 'post_${story['id']}',
+      username: story['username'] as String? ?? 'Unknown',
+      mbtiType: mbtiType,
+      avatar: story['avatar'] as String? ?? '👤',
+      timeAgo: story['timeAgo'] as String? ?? 'just now',
+      postType: storyType,
+      content:
+          story['content'] as String? ??
+          story['title'] as String? ??
+          'Shared a story',
+      videoThumbnail: storyType == 'video'
+          ? story['videoThumbnail'] as String?
+          : null,
+      imageThumbnail: storyType == 'image'
+          ? story['imageThumbnail'] as String?
+          : null,
+      likes: story['likes'] as int? ?? 0,
+      comments: 0,
+      shares: 0,
+      gradient: gradient,
+      hashtags: hashtags,
+    );
+
+    // Add to beginning of posts list
+    _posts.insert(0, newPost);
+
+    // Initialize interaction states for the new post
+    _postLikeCounts[newPost.id] = newPost.likes;
+    _postCommentCounts[newPost.id] = newPost.comments;
+    _postShareCounts[newPost.id] = newPost.shares;
+
+    notifyListeners();
+  }
+
+  void deletePost(String postId) {
+    // Remove the post from the list
+    _posts.removeWhere((post) => post.id == postId);
+
+    // Clean up interaction data
+    _likedPostIds.remove(postId);
+    _bookmarkedPostIds.remove(postId);
+    _postLikeCounts.remove(postId);
+    _postCommentCounts.remove(postId);
+    _postShareCounts.remove(postId);
+
+    notifyListeners();
+  }
+
+  // Delete story functionality
+  void deleteStory(String storyId) {
+    // Remove the story from the list
+    _mbtiStories.removeWhere((story) => story['id'] == storyId);
+
+    // Also remove the corresponding post if it exists
+    final postId = 'post_$storyId';
+    deletePost(postId);
+
+    notifyListeners();
+  }
+
+  // Check if a story exists
+  bool storyExists(String storyId) {
+    return _mbtiStories.any((story) => story['id'] == storyId);
   }
 }
