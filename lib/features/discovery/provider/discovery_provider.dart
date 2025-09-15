@@ -31,6 +31,8 @@ class DiscoveryProvider extends ChangeNotifier {
   String? _createStoryError;
   Map<String, dynamic>? _lastCreatedStory;
 
+  final bool _isDeleted = false;
+
   // User interactions state
   final Set<String> _likedPostIds = {};
   final Set<String> _bookmarkedPostIds = {};
@@ -62,6 +64,8 @@ class DiscoveryProvider extends ChangeNotifier {
 
   Set<String> get likedPostIds => _likedPostIds;
   Set<String> get bookmarkedPostIds => _bookmarkedPostIds;
+
+  bool get isDeleted => _isDeleted;
 
   // Initialize discovery data
   Future<void> initializeDiscoveryData() async {
@@ -624,10 +628,10 @@ class DiscoveryProvider extends ChangeNotifier {
 
   // Delete story functionality
   void deleteStory(String storyId) {
-    // Remove the story from the list
+    // Remove from stories list
     _mbtiStories.removeWhere((story) => story['id'] == storyId);
 
-    // Also remove the corresponding post if it exists
+    // Remove corresponding post if it exists
     final postId = 'post_$storyId';
     deletePost(postId);
 

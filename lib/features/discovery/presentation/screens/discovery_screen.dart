@@ -33,6 +33,10 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
   // Animation controllers
   final Map<String, AnimationController> _likeAnimationControllers = {};
   final Map<String, AnimationController> _bookmarkAnimationControllers = {};
+  Set<String> deletedStoriesId = {};
+
+  //check if deleted
+  bool isDeleted = false;
 
   @override
   void initState() {
@@ -218,7 +222,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
       child: Column(
         children: [
           GestureDetector(
-            onTap: () => _onStoryTap(context, story),
+            onTap: () => _onStoryTap(context, story, story['id'] as String),
             child: Container(
               width: 70,
               height: 70,
@@ -395,10 +399,27 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
     );
   }
 
-  void _onStoryTap(BuildContext context, Map<String, dynamic> story) {
+  void _onStoryTap(
+    BuildContext context,
+    Map<String, dynamic> story,
+    String postId,
+  ) {
     if (story['id'] == 'add_story') {
       _showAddStoryOptions(context);
     } else {
+      final provider = Provider.of<DiscoveryProvider>(context, listen: false);
+
+      // Check if story still exists
+      if (!provider.storyExists(story['id'])) {
+        _showEmptyStoryState();
+        return;
+      }
+
+      if (isDeleted && story['id'] == postId) {
+        _showEmptyStoryState();
+        return;
+      }
+
       _showStoryViewer(context, story);
     }
   }
@@ -618,11 +639,16 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
   }
 
   void _showStoryViewer(BuildContext context, Map<String, dynamic> story) {
-    // Check if story still exists before showing
-    checkisDeleted(story);
-
     // Get fresh story data from provider
     final provider = Provider.of<DiscoveryProvider>(context, listen: false);
+
+    // Check if story still exists
+    if (!provider.storyExists(story['id'])) {
+      _showEmptyStoryState();
+      return;
+    }
+
+    // Get fresh story data
     final freshStory = provider.mbtiStories.firstWhere(
       (s) => s['id'] == story['id'],
       orElse: () => story,
@@ -1620,22 +1646,16 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
     // TODO: delete only current user
 
     options.add(
-      ListTile(
-        leading: Icon(Icons.delete, color: AppColors.error),
-        title: Text('Delete Post', style: TextStyle(color: AppColors.error)),
-        onTap: () {
-          Navigator.pop(context);
-          _deletePost(context, post);
-        },
-      ),
-    );
-
-    // Cancel option
-    options.add(
-      ListTile(
-        leading: Icon(Icons.cancel, color: AppColors.textSecondary),
-        title: Text('Cancel'),
-        onTap: () => Navigator.pop(context),
+      Expanded(
+        flex: 4,
+        child: ListTile(
+          leading: Icon(Icons.delete, color: AppColors.error),
+          title: Text('Delete Post', style: TextStyle(color: AppColors.error)),
+          onTap: () {
+            Navigator.pop(context);
+            _deletePost(context, post);
+          },
+        ),
       ),
     );
 
@@ -1858,6 +1878,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
   void _performDeletePost(Map<String, dynamic> post) {
     final provider = Provider.of<DiscoveryProvider>(context, listen: false);
     final postId = post['id'] as String;
+    final deletedStoryId = post['storyId'] as String?;
 
     // Delete the post
     provider.deletePost(postId);
@@ -1868,6 +1889,8 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
       _likeAnimationControllers.remove(postId);
       _bookmarkAnimationControllers[postId]?.dispose();
       _bookmarkAnimationControllers.remove(postId);
+      isDeleted = !isDeleted;
+      deletedStoriesId.add(deletedStoryId ?? '');
     });
 
     // Show success message
@@ -2634,19 +2657,6 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
     );
   }
 
-  void checkisDeleted(Map<String, dynamic> story) {
-    final provider = Provider.of<DiscoveryProvider>(context, listen: false);
-    final storyId = story['id'] as String;
-
-    // Check if the story still exists using the provider's method
-    final storyExists = provider.storyExists(storyId);
-
-    if (!storyExists) {
-      // Show empty state if story is deleted
-      _showEmptyStoryState();
-    }
-  }
-
   void _showEmptyStoryState() {
     showDialog(
       context: context,
@@ -2734,10 +2744,10 @@ class _DiscoveryScreenState extends State<DiscoveryScreen>
     final provider = Provider.of<DiscoveryProvider>(context, listen: false);
     final storyId = story['id'] as String;
 
-    // Delete the story
+    // Delete the story through provider
     provider.deleteStory(storyId);
 
-    // Close the story viewer and return to discovery screen
+    // Close the story viewer
     Navigator.pop(context);
 
     // Show success message
